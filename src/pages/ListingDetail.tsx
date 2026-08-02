@@ -1,11 +1,12 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Heart, MapPin, CalendarDays, BedDouble, Users, MessageSquare, ShieldCheck, Sparkles, Check, Clock } from "lucide-react";
+import { ArrowLeft, Heart, MapPin, CalendarDays, BedDouble, Users, MessageSquare, ShieldCheck, Sparkles, Check, Clock, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PhotoGallery } from "@/components/housemate/PhotoGallery";
 import { StatusBadge } from "@/components/housemate/StatusBadge";
+import { ReportDialog } from "@/components/housemate/ReportDialog";
 import { formatDate, formatPrice, genderLabel, initials, periodLabelLong, roomTypeLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { ListingStatus } from "@/lib/types";
@@ -143,6 +144,22 @@ export default function ListingDetail() {
                   </div>
                   {owner.bio && <p className="mt-2 text-xs text-muted-foreground">{owner.bio}</p>}
                 </div>
+              )}
+              {!isOwner && (
+                <ReportDialog
+                  targetType="listing"
+                  targetId={listing.id}
+                  contextLabel={listing.title}
+                  trigger={
+                    <button
+                      type="button"
+                      className="mt-4 flex w-full items-center justify-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive"
+                    >
+                      <Flag className="h-3.5 w-3.5" />
+                      Report this listing
+                    </button>
+                  }
+                />
               )}
             </div>
           </div>

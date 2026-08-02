@@ -3578,6 +3578,39 @@ export type Database = {
           },
         ]
       }
+      reports: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          message: string
+          reporter_id: string
+          status: string
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          message: string
+          reporter_id: string
+          status?: string
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          message?: string
+          reporter_id?: string
+          status?: string
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: []
+      }
       saved_listings: {
         Row: {
           created_at: string

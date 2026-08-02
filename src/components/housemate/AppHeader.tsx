@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, LogOut, MessageSquare, Plus, Search, User as UserIcon } from "lucide-react";
+import { Flag, LayoutDashboard, LogOut, MessageSquare, Plus, Search, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -7,6 +7,7 @@ import { useApp } from "@/lib/store";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Logo } from "./Logo";
+import { ReportDialog } from "./ReportDialog";
 
 const navItems = [
   { to: "/browse", label: "Browse", icon: Search },
@@ -71,6 +72,15 @@ export function AppHeader() {
                 <DropdownMenuItem onClick={() => navigate("/messages")}>
                   <MessageSquare className="mr-2 h-4 w-4" /> Messages
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <ReportDialog
+                  targetType="general"
+                  trigger={
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      <Flag className="mr-2 h-4 w-4" /> Report an issue
+                    </DropdownMenuItem>
+                  }
+                />
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => { void logout().then(() => navigate("/")); }}

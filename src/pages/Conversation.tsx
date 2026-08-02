@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Send, ShieldCheck, Share2, Check, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, ShieldCheck, Share2, Check, ExternalLink, Loader2, Flag } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChatBubble } from "@/components/housemate/ChatBubble";
 import { ConversationListItem } from "@/components/housemate/ConversationListItem";
+import { ReportDialog } from "@/components/housemate/ReportDialog";
 import { initials } from "@/lib/format";
 
 export default function Conversation() {
@@ -88,6 +89,18 @@ export default function Conversation() {
             </div>
             {isContactShared && (
               <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-1 text-xs font-semibold text-success"><Check className="h-3 w-3" />Contact shared</span>
+            )}
+            {other && (
+              <ReportDialog
+                targetType="user"
+                targetId={other.id}
+                contextLabel={other.fullName}
+                trigger={
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive" aria-label="Report user">
+                    <Flag className="h-4 w-4" />
+                  </Button>
+                }
+              />
             )}
           </header>
 

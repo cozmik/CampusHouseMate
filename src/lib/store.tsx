@@ -17,6 +17,7 @@ import type {
   ListingStatus,
   Message,
   Profile,
+  ReportTargetType,
   RoomType,
   SavedListing,
   School,
@@ -194,6 +195,13 @@ interface AppContextValue {
 
   getProfile: (id: string) => Profile | undefined;
   getSchool: (id: string) => School | undefined;
+
+  submitReport: (input: {
+    targetType: ReportTargetType;
+    targetId?: string;
+    category: string;
+    message: string;
+  }) => Promise<{ ok: boolean; error?: string }>;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -903,6 +911,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [profilesCache],
   );
 
+  const submitReport = useCallback(
+    async (input: {
+      targetType: ReportTargetType;
+      targetId?: string;
+      category: string;
+      message: string;
+    }) => {
+      if (!currentUser) {
+        return { ok: false, error: "You need to be signed in to submit a report." };
+      }
+      const { error } = await supabase.from("reports").insert({
+        reporter_id: currentUser.id,
+        target_type: input.targetType,
+        target_id: input.targetId ?? null,
+        category: input.category,
+        message: input.message.trim(),
+      });
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
+    [currentUser],
+  );
+
   const value = useMemo<AppContextValue>(
     () => ({
       authReady,
@@ -936,6 +967,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       getSavedListings,
       getProfile,
       getSchool: getSchoolData,
+      submitReport,
     }),
     [
       authReady,
@@ -967,6 +999,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleSave,
       getSavedListings,
       getProfile,
+      submitReport,
     ],
   );
 

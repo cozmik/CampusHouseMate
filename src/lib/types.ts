@@ -25,6 +25,21 @@ export type ConversationStatus = "active" | "contact_shared";
 
 export type MessageType = "text" | "contact_share" | "system";
 
+export type ReportTargetType = "listing" | "user" | "conversation" | "general";
+
+export type ReportStatus = "open" | "reviewing" | "resolved";
+
+export interface Report {
+  id: string;
+  reporterId: string;
+  targetType: ReportTargetType;
+  targetId?: string;
+  category: string;
+  message: string;
+  status: ReportStatus;
+  createdAt: string;
+}
+
 export interface SeekerPreferences {
   tags: string[];
   note?: string;

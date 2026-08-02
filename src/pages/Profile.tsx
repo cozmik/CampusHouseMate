@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Camera, Check, Link as LinkIcon, User as UserIcon, Loader2 } from "lucide-react";
+import { Camera, Check, Link as LinkIcon, User as UserIcon, Loader2, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SchoolCombobox } from "@/components/housemate/SchoolCombobox";
+import { ReportDialog } from "@/components/housemate/ReportDialog";
 import { initials } from "@/lib/format";
 
 export default function Profile() {
@@ -118,6 +119,22 @@ export default function Profile() {
         </div>
       </div>
       <p className="mt-4 text-center text-xs text-muted-foreground">Your phone & WhatsApp stay hidden until you tap "Share contact" in a chat.</p>
+
+      <div className="mt-8 flex items-center justify-between rounded-2xl bg-secondary/40 p-4">
+        <div>
+          <p className="text-sm font-semibold">Need help?</p>
+          <p className="text-xs text-muted-foreground">Report a bug, a safety concern, or anything else.</p>
+        </div>
+        <ReportDialog
+          targetType="general"
+          trigger={
+            <Button variant="outline" size="sm">
+              <Flag className="h-4 w-4" />
+              Report an issue
+            </Button>
+          }
+        />
+      </div>
     </div>
   );
 }
