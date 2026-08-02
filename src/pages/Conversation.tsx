@@ -120,7 +120,7 @@ export default function Conversation() {
 
           <div className="flex items-center gap-2 border-t border-border/70 bg-card p-3 lg:rounded-b-2xl">
             <Input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void onSend(); } }} placeholder="Type a message…" className="h-10 rounded-full" />
-            <Button size="icon" className="h-10 w-10 shrink-0 rounded-full bg-gradient-primary" onClick={() => void onSend()} disabled={!text.trim() || sending}><Send className="h-4 w-4" /></Button>
+            <Button size="icon" className="h-10 w-10 shrink-0 rounded-full" onClick={() => void onSend()} disabled={!text.trim() || sending}><Send className="h-4 w-4" /></Button>
           </div>
         </section>
       </div>

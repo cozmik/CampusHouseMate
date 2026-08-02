@@ -52,7 +52,7 @@ export function ChatBubble({ message, isOwn, senderFirstName }: { message: Messa
 
   return (
     <div className={cn("my-1 flex", isOwn ? "justify-end" : "justify-start")}>
-      <div className={cn("max-w-[78%] rounded-2xl px-3.5 py-2 text-sm shadow-sm", isOwn ? "rounded-br-md bg-gradient-primary text-primary-foreground" : "rounded-bl-md bg-card border border-border")}>
+      <div className={cn("max-w-[78%] rounded-2xl px-3.5 py-2 text-sm shadow-sm", isOwn ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-card border border-border")}>
         <p className="whitespace-pre-wrap break-words">{message.content}</p>
         <p className={cn("mt-1 text-[10px]", isOwn ? "text-primary-foreground/70" : "text-muted-foreground")}>{formatTime(message.createdAt)}</p>
       </div>

@@ -40,10 +40,10 @@ export default function Login() {
       <div className="pointer-events-none absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-coral/20 blur-3xl" />
       <div className="relative w-full max-w-md">
         <div className="mb-6 flex justify-center"><Logo /></div>
-        <div className="rounded-3xl glass-strong p-6 sm:p-8">
+        <div className="rounded-3xl glass-strong p-7 sm:p-10">
           <h1 className="text-2xl font-bold">Welcome back</h1>
-          <p className="text-sm text-muted-foreground">Log in to continue to HouseMate.</p>
-          <form onSubmit={onSubmit} className="mt-6 space-y-4">
+          <p className="mt-1 text-sm text-muted-foreground">Log in to continue to HouseMate.</p>
+          <form onSubmit={onSubmit} className="mt-7 space-y-5">
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -63,11 +63,11 @@ export default function Login() {
               {loading ? "Logging in…" : "Log in"}<ArrowRight className="h-4 w-4" />
             </Button>
           </form>
-          <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground"><div className="h-px flex-1 bg-border" />or<div className="h-px flex-1 bg-border" /></div>
+          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground"><div className="h-px flex-1 bg-border" />or<div className="h-px flex-1 bg-border" /></div>
           <Button variant="outline" className="w-full" onClick={() => void demo()} disabled={loading}>
             <Sparkles className="h-4 w-4 text-primary" />Continue as demo student
           </Button>
-          <p className="mt-4 text-center text-sm text-muted-foreground">New here? <Link to="/signup" className="font-semibold text-primary">Create an account</Link></p>
+          <p className="mt-5 text-center text-sm text-muted-foreground">New here? <Link to="/signup" className="font-semibold text-primary">Create an account</Link></p>
         </div>
       </div>
     </div>

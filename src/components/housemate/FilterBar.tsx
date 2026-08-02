@@ -99,7 +99,7 @@ export function FilterSheet({ open, onOpenChange, value, onChange }: { open: boo
 export function FilterBar({ value, onChange, onOpenSheet, resultCount }: { value: FilterValue; onChange: (v: FilterValue) => void; onOpenSheet: () => void; resultCount: number }) {
   const active = countActiveFilters(value);
   return (
-    <div className="sticky top-16 z-30 -mx-4 mb-4 border-b border-border/70 bg-background/90 px-4 py-3 backdrop-blur-md md:mx-0 md:rounded-2xl md:border md:bg-card md:px-4">
+    <div className="sticky top-16 z-30 -mx-4 mb-6 border-b border-border/70 bg-background/90 px-4 py-3.5 backdrop-blur-md sm:-mx-6 sm:px-6 md:mx-0 md:rounded-2xl md:border md:bg-card md:px-5">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <p className="text-sm font-semibold">{resultCount} {resultCount === 1 ? "space" : "spaces"}</p>

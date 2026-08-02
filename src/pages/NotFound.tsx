@@ -13,7 +13,7 @@ const NotFound = () => {
       <p className="text-7xl font-black text-gradient">404</p>
       <h1 className="mt-2 text-2xl font-bold">Page not found</h1>
       <p className="mt-1 max-w-sm text-sm text-muted-foreground">The page you’re looking for doesn’t exist or may have moved.</p>
-      <Button asChild className="mt-6 bg-gradient-primary"><Link to="/"><Home className="h-4 w-4" />Back home</Link></Button>
+      <Button asChild className="mt-6"><Link to="/"><Home className="h-4 w-4" />Back home</Link></Button>
     </div>
   );
 };

@@ -120,7 +120,7 @@ export function ListingWizard() {
         <div className="flex items-center justify-between">
           {STEPS.map((s, i) => (
             <div key={s.key} className="flex flex-1 items-center last:flex-none">
-              <button type="button" onClick={() => i < step && setStep(i)} disabled={i > step} className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 text-sm font-semibold transition-colors", i < step && "border-primary bg-primary text-primary-foreground", i === step && "border-primary bg-card text-primary", i > step && "border-border bg-card text-muted-foreground")}>
+               <button type="button" onClick={() => i < step && setStep(i)} disabled={i > step} className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-xs font-semibold transition-colors sm:h-9 sm:w-9 sm:text-sm", i < step && "border-primary bg-primary text-primary-foreground", i === step && "border-primary bg-card text-primary", i > step && "border-border bg-card text-muted-foreground")}>
                 {i < step ? <Check className="h-4 w-4" /> : i + 1}
               </button>
               {i < STEPS.length - 1 && <div className={cn("mx-1 h-0.5 flex-1 rounded-full transition-colors", i < step ? "bg-primary" : "bg-border")} />}
@@ -134,7 +134,7 @@ export function ListingWizard() {
         </div>
       </div>
 
-      <div className="rounded-3xl glass p-5 sm:p-7">
+      <div className="rounded-3xl glass p-5 sm:p-8">
         {step === 0 && (
           <div className="space-y-5">
             <div>
@@ -339,9 +339,9 @@ export function ListingWizard() {
         <div className="mt-6 flex items-center justify-between gap-3">
           <Button variant="ghost" onClick={back} disabled={step === 0}><ArrowLeft className="h-4 w-4" />Back</Button>
           {step < STEPS.length - 1 ? (
-            <Button onClick={next} className="bg-gradient-primary">Continue<ArrowRight className="h-4 w-4" /></Button>
+            <Button onClick={next}>Continue<ArrowRight className="h-4 w-4" /></Button>
           ) : (
-            <Button onClick={submit} disabled={submitting} className="bg-gradient-primary">
+            <Button onClick={submit} disabled={submitting}>
               <CheckCircle2 className="h-4 w-4" />{submitting ? "Posting…" : "Post listing"}
             </Button>
           )}

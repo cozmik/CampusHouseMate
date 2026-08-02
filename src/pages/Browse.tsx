@@ -60,20 +60,20 @@ export default function Browse() {
   const hasContext = Boolean(schoolId || state || lga || q);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold">Browse spaces</h1>
-        <p className="text-sm text-muted-foreground">Find a lodge near your campus or in a specific area.</p>
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl font-bold sm:text-3xl">Browse spaces</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Find a lodge near your campus or in a specific area.</p>
       </div>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by title, area, school…" className="h-10 pl-9" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by title, area, school…" className="h-11 pl-9" />
         </div>
         {hasContext && (<Button variant="ghost" size="sm" onClick={clearAll} className="text-muted-foreground"><X className="h-4 w-4" />Clear all</Button>)}
       </div>
       {(school || state || lga) && (
-        <div className="mb-3 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap gap-2">
           {school && (<ContextChip icon={<SchoolIcon className="h-3.5 w-3.5" />} label={school.name} onClear={() => clearParam("school")} />)}
           {state && (<ContextChip icon={<MapPin className="h-3.5 w-3.5" />} label={lga ? `${lga}, ${state}` : state} onClear={() => clearParam("state")} />)}
         </div>
@@ -81,14 +81,14 @@ export default function Browse() {
       <FilterBar value={filterValue} onChange={update} onOpenSheet={() => setSheetOpen(true)} resultCount={results.length} />
       <FilterSheet open={sheetOpen} onOpenChange={setSheetOpen} value={filterValue} onChange={update} />
       {results.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border py-16 text-center">
+        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border py-20 text-center">
           <div className="grid h-14 w-14 place-items-center rounded-2xl bg-muted text-muted-foreground"><Search className="h-6 w-6" /></div>
           <h3 className="mt-4 text-lg font-semibold">No spaces found</h3>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">Try adjusting your filters or broadening your search area.</p>
-          <Button variant="outline" size="sm" className="mt-4" onClick={() => { update({ ...DEFAULT_FILTERS }); clearAll(); }}>Reset filters</Button>
+          <Button variant="outline" size="sm" className="mt-5" onClick={() => { update({ ...DEFAULT_FILTERS }); clearAll(); }}>Reset filters</Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
           {results.map((l) => (<ListingCard key={l.id} listing={l} showStatus />))}
         </div>
       )}
@@ -98,9 +98,9 @@ export default function Browse() {
 
 function ContextChip({ icon, label, onClear }: { icon: React.ReactNode; label: string; onClear: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card py-1 pl-3 pr-1.5 text-xs font-medium shadow-card">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary py-1.5 pl-3.5 pr-2 text-xs font-medium text-secondary-foreground">
       <span className="text-primary">{icon}</span>{label}
-      <button type="button" onClick={onClear} className="grid h-5 w-5 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Remove filter"><X className="h-3 w-3" /></button>
+      <button type="button" onClick={onClear} className="grid h-5 w-5 place-items-center rounded-full hover:bg-foreground/10" aria-label="Remove filter"><X className="h-3 w-3" /></button>
     </span>
   );
 }

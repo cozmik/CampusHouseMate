@@ -19,7 +19,7 @@ export function BottomNav() {
             <span className="flex flex-col items-center gap-0.5">
               <span className={cn(
                 "grid h-7 w-7 place-items-center rounded-lg transition-colors",
-                item.center ? "bg-gradient-primary text-primary-foreground shadow-glow" : "text-muted-foreground",
+                item.center ? "bg-primary text-primary-foreground shadow-glow" : "text-muted-foreground",
               )}>
                 <item.icon className="h-5 w-5" />
               </span>

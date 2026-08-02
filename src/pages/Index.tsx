@@ -39,82 +39,82 @@ export default function Index() {
   return (
     <div>
       <section className="relative overflow-hidden bg-hero">
-        <div className="pointer-events-none absolute -left-20 -top-24 h-72 w-72 rounded-full bg-primary/25 blur-3xl" />
-        <div className="pointer-events-none absolute -right-16 top-10 h-80 w-80 rounded-full bg-coral/25 blur-3xl" />
-        <div className="relative mx-auto max-w-6xl px-4 py-12 sm:py-16 md:py-20">
+        <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-primary/20 blur-3xl sm:h-96 sm:w-96" />
+        <div className="pointer-events-none absolute -right-16 top-16 h-80 w-80 rounded-full bg-coral/20 blur-3xl sm:h-[26rem] sm:w-[26rem]" />
+        <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24 md:py-32 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1.5 text-xs font-semibold text-primary">
               <Sparkles className="h-3.5 w-3.5" />Handing over your lodge? Find your replacement.
             </span>
-            <h1 className="mt-4 text-balance text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl md:text-6xl">
+            <h1 className="mt-6 text-balance text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl md:text-6xl">
               Find your next hostel, <span className="text-gradient">the student way</span>
             </h1>
-            <p className="mx-auto mt-4 max-w-xl text-pretty text-base text-muted-foreground sm:text-lg">
+            <p className="mx-auto mt-5 max-w-xl text-pretty text-base text-muted-foreground sm:text-lg">
               HouseMate connects outgoing students with new ones taking over their space. Pick your school, chat with the current occupant, and move in with confidence.
             </p>
           </div>
-          <div className="mx-auto mt-8 max-w-2xl"><SchoolStateSearch /></div>
-          <div className="mx-auto mt-6 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+          <div className="mx-auto mt-10 max-w-2xl sm:mt-12"><SchoolStateSearch /></div>
+          <div className="mx-auto mt-8 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs text-muted-foreground sm:mt-10">
             {trust.map((t) => (<span key={t.label} className="inline-flex items-center gap-1.5"><t.icon className="h-4 w-4 text-primary" />{t.label}</span>))}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-10">
-        <div className="mb-4 flex items-end justify-between">
+      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mb-6 flex items-end justify-between sm:mb-8">
           <div>
-            <h2 className="text-2xl font-bold">Trending schools</h2>
-            <p className="text-sm text-muted-foreground">Campuses with the most available spaces right now.</p>
+            <h2 className="text-2xl font-bold sm:text-3xl">Trending schools</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Campuses with the most available spaces right now.</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/browse")}>All schools<ArrowRight className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/browse")} className="shrink-0">All schools<ArrowRight className="h-4 w-4" /></Button>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-6">
           {trending.map(({ school, count }) => (<SchoolChip key={school.id} school={school} count={count} />))}
         </div>
       </section>
 
-      <section className="border-y border-border/60 bg-secondary/30">
-        <div className="mx-auto max-w-6xl px-4 py-12">
-          <h2 className="text-center text-2xl font-bold">How HouseMate works</h2>
-          <p className="mt-1 text-center text-sm text-muted-foreground">Three simple steps from search to keys.</p>
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
+      <section className="bg-secondary/30 py-14 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <h2 className="text-center text-2xl font-bold sm:text-3xl">How HouseMate works</h2>
+          <p className="mt-2 text-center text-sm text-muted-foreground">Three simple steps from search to keys.</p>
+          <div className="mt-10 grid gap-5 sm:mt-12 md:grid-cols-3 md:gap-6">
             {steps.map((s, i) => (
-              <div key={s.title} className="relative rounded-2xl border border-border/70 bg-card p-6 shadow-card">
-                <span className="absolute right-4 top-4 text-3xl font-black text-primary/10">{i + 1}</span>
-                <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary"><s.icon className="h-5 w-5" /></span>
-                <h3 className="mt-4 font-bold">{s.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{s.body}</p>
+              <div key={s.title} className="relative rounded-2xl bg-card p-7 shadow-card sm:p-8">
+                <span className="absolute right-5 top-5 text-3xl font-black text-primary/10">{i + 1}</span>
+                <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary"><s.icon className="h-5 w-5" /></span>
+                <h3 className="mt-5 font-bold">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-12">
-        <div className="mb-4 flex items-end justify-between">
+      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mb-6 flex items-end justify-between sm:mb-8">
           <div>
-            <h2 className="text-2xl font-bold">Fresh on the block</h2>
-            <p className="text-sm text-muted-foreground">Recently posted available spaces.</p>
+            <h2 className="text-2xl font-bold sm:text-3xl">Fresh on the block</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Recently posted available spaces.</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/browse")}>Browse all<ArrowRight className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/browse")} className="shrink-0">Browse all<ArrowRight className="h-4 w-4" /></Button>
         </div>
         {recent.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
+          <div className="rounded-3xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
             No listings yet — be the first to post a space.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
             {recent.map((l) => (<ListingCard key={l.id} listing={l} />))}
           </div>
         )}
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pb-16">
-        <div className="overflow-hidden rounded-3xl bg-gradient-primary p-8 text-primary-foreground shadow-elevated sm:p-12">
+      <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-3xl bg-gradient-primary p-10 text-primary-foreground shadow-elevated sm:p-16">
           <div className="mx-auto max-w-xl text-center">
             <h2 className="text-2xl font-bold sm:text-3xl">Got a space to hand over?</h2>
-            <p className="mt-2 text-primary-foreground/90">Post it in minutes and let incoming students find you. It's free.</p>
-            <Button size="lg" variant="secondary" className="mt-6 bg-background text-foreground hover:bg-background/90" onClick={() => navigate("/post")}>Post your space<ArrowRight className="h-4 w-4" /></Button>
+            <p className="mt-3 text-primary-foreground/90">Post it in minutes and let incoming students find you. It's free.</p>
+            <Button size="lg" variant="secondary" className="mt-7 bg-background text-foreground hover:bg-background/90" onClick={() => navigate("/post")}>Post your space<ArrowRight className="h-4 w-4" /></Button>
           </div>
         </div>
       </section>
@@ -124,10 +124,10 @@ export default function Index() {
 
 function SchoolChip({ school, count }: { school: School; count: number }) {
   return (
-    <Link to={`/browse?school=${encodeURIComponent(school.id)}`} className="group flex flex-col gap-1 rounded-2xl border border-border/70 bg-card p-4 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-elevated">
+    <Link to={`/browse?school=${encodeURIComponent(school.id)}`} className="group flex flex-col gap-1.5 rounded-2xl bg-card p-5 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated">
       <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{schoolTypeLabel(school.type)}</span>
       <span className="line-clamp-2 text-sm font-semibold leading-snug">{school.name}</span>
-      <span className="mt-auto flex items-center justify-between pt-2">
+      <span className="mt-auto flex items-center justify-between pt-3">
         <span className="text-xs text-muted-foreground">{school.state}</span>
         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{count} {count === 1 ? "space" : "spaces"}</span>
       </span>

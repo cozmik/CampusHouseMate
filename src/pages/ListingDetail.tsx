@@ -51,10 +51,10 @@ export default function ListingDetail() {
   const statusOptions: ListingStatus[] = ["available", "pending", "taken"];
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
-      <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-4 text-muted-foreground"><ArrowLeft className="h-4 w-4" />Back</Button>
-      <div className="grid gap-6 lg:grid-cols-5">
-        <div className="space-y-6 lg:col-span-3">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-5 text-muted-foreground"><ArrowLeft className="h-4 w-4" />Back</Button>
+      <div className="grid gap-8 lg:grid-cols-5 lg:gap-10">
+        <div className="space-y-7 lg:col-span-3">
           <PhotoGallery photos={listing.photos} />
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -64,7 +64,7 @@ export default function ListingDetail() {
             <h1 className="text-2xl font-bold leading-tight sm:text-3xl">{listing.title}</h1>
             <p className="flex items-center gap-1.5 text-sm text-muted-foreground"><MapPin className="h-4 w-4" />{school?.name} · {listing.area ? `${listing.area}, ` : ""}{listing.lga}, {listing.state}</p>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             <Fact icon={BedDouble} label="Room type" value={roomTypeLabel(listing.roomType)} />
             <Fact icon={Users} label="Gender" value={genderLabel(listing.genderPreference)} />
             <Fact icon={CalendarDays} label="Available" value={formatDate(listing.availableFrom)} />
@@ -77,7 +77,7 @@ export default function ListingDetail() {
             </div>
           )}
           {prefs && (prefs.tags.length > 0 || prefs.note) && (
-            <div className="rounded-2xl border border-border bg-secondary/40 p-5">
+            <div className="rounded-2xl bg-secondary/40 p-5 sm:p-6">
               <div className="mb-3 flex items-center gap-2">
                 <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary"><Sparkles className="h-4 w-4" /></span>
                 <div>
@@ -93,14 +93,14 @@ export default function ListingDetail() {
               {prefs.note && <p className="text-sm text-muted-foreground">{prefs.note}</p>}
             </div>
           )}
-          <div className="flex items-start gap-2 rounded-2xl border border-warning/30 bg-warning/5 p-4 text-sm">
+          <div className="flex items-start gap-2.5 rounded-2xl bg-warning/5 p-4 text-sm sm:p-5">
             <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
             <p className="text-muted-foreground"><span className="font-semibold text-foreground">Stay safe.</span> Meet on or around campus before paying. HouseMate never handles money — share contact details only inside the chat when you're comfortable.</p>
           </div>
         </div>
         <div className="lg:col-span-2">
           <div className="space-y-4 lg:sticky lg:top-24">
-            <div className="rounded-3xl border border-border/70 bg-card p-5 shadow-card">
+            <div className="rounded-3xl bg-card p-6 shadow-elevated sm:p-7">
               <div className="flex items-baseline justify-between">
                 <span className="text-2xl font-extrabold">{formatPrice(listing.price, listing.pricePeriod)}</span>
                 <Button variant="outline" size="icon" onClick={onSave} className={cn("h-9 w-9 rounded-full", saved && "border-primary text-primary")}><Heart className={cn("h-4 w-4", saved && "fill-current")} /></Button>
@@ -154,7 +154,7 @@ export default function ListingDetail() {
 
 function Fact({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border/70 bg-card p-3">
+    <div className="rounded-xl bg-secondary/40 p-3.5">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><Icon className="h-3.5 w-3.5" />{label}</div>
       <p className="mt-1 text-sm font-semibold">{value}</p>
     </div>

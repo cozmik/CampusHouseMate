@@ -112,7 +112,7 @@ export default function Profile() {
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={() => navigate("/dashboard")}>Cancel</Button>
-          <Button onClick={() => void save()} disabled={saving} className="bg-gradient-primary">
+          <Button onClick={() => void save()} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Save changes
           </Button>
         </div>

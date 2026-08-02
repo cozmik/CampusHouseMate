@@ -21,7 +21,7 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-40 glass-nav">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6 lg:px-8">
         <Logo />
         <nav className="ml-4 hidden items-center gap-1 md:flex">
           {navItems.map((item) => (
@@ -85,7 +85,7 @@ export function AppHeader() {
               <Button variant="ghost" size="sm" onClick={() => navigate("/login")} className="hidden sm:inline-flex">
                 Log in
               </Button>
-              <Button size="sm" onClick={() => navigate("/signup")} className="bg-gradient-primary shadow-glow">
+              <Button size="sm" onClick={() => navigate("/signup")} className="shadow-glow">
                 Get started
               </Button>
             </>
