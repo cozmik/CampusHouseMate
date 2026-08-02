@@ -39,10 +39,12 @@ export default function Signup() {
   };
 
   return (
-    <div className="grid min-h-screen place-items-center bg-hero px-4 py-10">
-      <div className="w-full max-w-md">
+    <div className="relative grid min-h-screen place-items-center overflow-hidden bg-hero px-4 py-10">
+      <div className="pointer-events-none absolute -left-20 top-0 h-72 w-72 rounded-full bg-primary/20 blur-3xl" />
+      <div className="pointer-events-none absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-coral/20 blur-3xl" />
+      <div className="relative w-full max-w-md">
         <div className="mb-6 flex justify-center"><Logo /></div>
-        <div className="rounded-3xl border border-border/70 bg-card p-6 shadow-elevated sm:p-8">
+        <div className="rounded-3xl glass-strong p-6 sm:p-8">
           <h1 className="text-2xl font-bold">Create your account</h1>
           <p className="text-sm text-muted-foreground">One account lets you post a space and message others.</p>
           <form onSubmit={onSubmit} className="mt-6 space-y-4">

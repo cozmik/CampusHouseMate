@@ -93,10 +93,16 @@ export function getSchool(id: string): School | undefined {
   return schools.find((s) => s.id === id);
 }
 
-export function searchSchools(query: string, limit = 8): School[] {
+export function schoolsForState(state: string): School[] {
+  return schools
+    .filter((s) => s.state === state)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function searchSchools(query: string, limit = 8, pool: School[] = schools): School[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
-  return schools
+  return pool
     .filter(
       (s) =>
         s.name.toLowerCase().includes(q) ||

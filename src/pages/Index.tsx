@@ -38,8 +38,10 @@ export default function Index() {
 
   return (
     <div>
-      <section className="bg-hero">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16 md:py-20">
+      <section className="relative overflow-hidden bg-hero">
+        <div className="pointer-events-none absolute -left-20 -top-24 h-72 w-72 rounded-full bg-primary/25 blur-3xl" />
+        <div className="pointer-events-none absolute -right-16 top-10 h-80 w-80 rounded-full bg-coral/25 blur-3xl" />
+        <div className="relative mx-auto max-w-6xl px-4 py-12 sm:py-16 md:py-20">
           <div className="mx-auto max-w-2xl text-center">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
               <Sparkles className="h-3.5 w-3.5" />Handing over your lodge? Find your replacement.

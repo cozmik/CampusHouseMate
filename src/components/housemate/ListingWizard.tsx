@@ -17,13 +17,14 @@ import { PhotoUploader, type UploadingPhoto } from "./PhotoUploader";
 import { SeekerPreferencesInput } from "./SeekerPreferencesInput";
 
 const STEPS = [
-  { key: "school", title: "School", icon: SchoolIcon },
-  { key: "location", title: "Location", icon: MapPin },
+  { key: "location", title: "School & location", icon: MapPin },
   { key: "room", title: "Room details", icon: BedDouble },
   { key: "photos", title: "Photos", icon: Camera },
   { key: "price", title: "Price & dates", icon: Wallet },
   { key: "review", title: "Review", icon: CheckCircle2 },
 ];
+
+type PostMode = "school" | "location";
 
 interface WizardState {
   schoolId: string;
@@ -52,6 +53,7 @@ export function ListingWizard() {
   const { createListing, getSchool } = useApp();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
+  const [postMode, setPostMode] = useState<PostMode>("school");
   const [form, setForm] = useState<WizardState>(initialState);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -60,11 +62,14 @@ export function ListingWizard() {
 
   const validateStep = (s: number): boolean => {
     const e: Record<string, string> = {};
-    if (s === 0 && !form.schoolId) e.schoolId = "Please select your school.";
-    if (s === 1) { if (!form.state) e.state = "Select a state."; if (!form.lga) e.lga = "Select an LGA."; }
-    if (s === 2) { if (!form.title.trim()) e.title = "Give your listing a title."; if (!form.roomType) e.roomType = "Pick a room type."; }
-    if (s === 3 && form.photos.length === 0) e.photos = "Add at least one photo.";
-    if (s === 4) { if (!form.price || Number(form.price) <= 0) e.price = "Enter a valid price."; if (!form.availableFrom) e.availableFrom = "Pick an availability date."; }
+    if (s === 0) {
+      if (!form.schoolId) e.schoolId = "Please select a school.";
+      if (!form.state) e.state = "Select a state.";
+      if (!form.lga) e.lga = "Select an LGA.";
+    }
+    if (s === 1) { if (!form.title.trim()) e.title = "Give your listing a title."; if (!form.roomType) e.roomType = "Pick a room type."; }
+    if (s === 2 && form.photos.length === 0) e.photos = "Add at least one photo.";
+    if (s === 3) { if (!form.price || Number(form.price) <= 0) e.price = "Enter a valid price."; if (!form.availableFrom) e.availableFrom = "Pick an availability date."; }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -72,8 +77,14 @@ export function ListingWizard() {
   const next = () => { if (validateStep(step)) setStep((s) => Math.min(s + 1, STEPS.length - 1)); };
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
+  const switchMode = (mode: PostMode) => {
+    setPostMode(mode);
+    setForm((prev) => ({ ...prev, schoolId: "", state: "", lga: "" }));
+    setErrors({});
+  };
+
   const submit = async () => {
-    if (!validateStep(4)) { setStep(4); return; }
+    if (!validateStep(3)) { setStep(3); return; }
     setSubmitting(true);
     try {
       const listing = await createListing({
@@ -123,44 +134,82 @@ export function ListingWizard() {
         </div>
       </div>
 
-      <div className="rounded-3xl border border-border/70 bg-card p-5 shadow-card sm:p-7">
+      <div className="rounded-3xl glass p-5 sm:p-7">
         {step === 0 && (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <h2 className="text-xl font-bold">Which school is this space for?</h2>
-              <p className="text-sm text-muted-foreground">Seekers search by school first, so pick the institution this lodge is close to.</p>
+              <h2 className="text-xl font-bold">Where is this space?</h2>
+              <p className="text-sm text-muted-foreground">Post by school for the fastest match, or start from a state and LGA.</p>
             </div>
-            <div className="space-y-1.5">
-              <Label>School</Label>
-              <SchoolCombobox value={form.schoolId} onChange={(id) => { set("schoolId", id); const sch = getSchool(id); if (sch && !form.state) set("state", sch.state); }} error={errors.schoolId} />
-            </div>
-          </div>
-        )}
 
-        {step === 1 && (
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-xl font-bold">Where is the lodge?</h2>
-              <p className="text-sm text-muted-foreground">For safety, we only ask for State, LGA and area — not your exact street.</p>
+            <div className="grid grid-cols-2 gap-1 rounded-2xl bg-muted p-1">
+              {([
+                { id: "school", label: "By School", icon: SchoolIcon },
+                { id: "location", label: "By Location", icon: MapPin },
+              ] as const).map((tab) => (
+                <button key={tab.id} type="button" onClick={() => switchMode(tab.id)} className={cn("inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all", postMode === tab.id ? "bg-card text-foreground shadow-card" : "text-muted-foreground hover:text-foreground")}>
+                  <tab.icon className="h-4 w-4" />{tab.label}
+                </button>
+              ))}
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>State</Label>
-                <Select value={form.state} onValueChange={(v) => { set("state", v); set("lga", ""); }}>
-                  <SelectTrigger className={errors.state ? "border-destructive" : ""}><SelectValue placeholder="Select state" /></SelectTrigger>
-                  <SelectContent className="max-h-72">{stateNames.map((s) => (<SelectItem key={s} value={s}>{s}</SelectItem>))}</SelectContent>
-                </Select>
-                {errors.state && <p className="text-xs text-destructive">{errors.state}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <Label>LGA</Label>
-                <Select value={form.lga} onValueChange={(v) => set("lga", v)} disabled={!form.state}>
-                  <SelectTrigger className={errors.lga ? "border-destructive" : ""}><SelectValue placeholder={form.state ? "Select LGA" : "Pick state first"} /></SelectTrigger>
-                  <SelectContent className="max-h-72">{lgasForState(form.state).map((l) => (<SelectItem key={l} value={l}>{l}</SelectItem>))}</SelectContent>
-                </Select>
-                {errors.lga && <p className="text-xs text-destructive">{errors.lga}</p>}
-              </div>
-            </div>
+
+            {postMode === "school" ? (
+              <>
+                <div className="space-y-1.5">
+                  <Label>School</Label>
+                  <SchoolCombobox
+                    value={form.schoolId}
+                    onChange={(id) => {
+                      const sch = getSchool(id);
+                      setForm((prev) => ({ ...prev, schoolId: id, state: sch?.state ?? "", lga: "" }));
+                    }}
+                    error={errors.schoolId}
+                  />
+                </div>
+                {form.state && (
+                  <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary/40 px-3 py-2.5 text-sm">
+                    <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                    <span className="text-muted-foreground">State (from school):</span>
+                    <span className="font-semibold">{form.state}</span>
+                  </div>
+                )}
+                <div className="space-y-1.5">
+                  <Label>LGA</Label>
+                  <Select value={form.lga} onValueChange={(v) => set("lga", v)} disabled={!form.state}>
+                    <SelectTrigger className={errors.lga ? "border-destructive" : ""}><SelectValue placeholder={form.state ? "Select LGA" : "Pick a school first"} /></SelectTrigger>
+                    <SelectContent className="max-h-72">{lgasForState(form.state).map((l) => (<SelectItem key={l} value={l}>{l}</SelectItem>))}</SelectContent>
+                  </Select>
+                  {errors.lga && <p className="text-xs text-destructive">{errors.lga}</p>}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label>State</Label>
+                    <Select value={form.state} onValueChange={(v) => setForm((prev) => ({ ...prev, state: v, lga: "", schoolId: "" }))}>
+                      <SelectTrigger className={errors.state ? "border-destructive" : ""}><SelectValue placeholder="Select state" /></SelectTrigger>
+                      <SelectContent className="max-h-72">{stateNames.map((s) => (<SelectItem key={s} value={s}>{s}</SelectItem>))}</SelectContent>
+                    </Select>
+                    {errors.state && <p className="text-xs text-destructive">{errors.state}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>LGA</Label>
+                    <Select value={form.lga} onValueChange={(v) => set("lga", v)} disabled={!form.state}>
+                      <SelectTrigger className={errors.lga ? "border-destructive" : ""}><SelectValue placeholder={form.state ? "Select LGA" : "Pick state first"} /></SelectTrigger>
+                      <SelectContent className="max-h-72">{lgasForState(form.state).map((l) => (<SelectItem key={l} value={l}>{l}</SelectItem>))}</SelectContent>
+                    </Select>
+                    {errors.lga && <p className="text-xs text-destructive">{errors.lga}</p>}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>School</Label>
+                  <SchoolCombobox value={form.schoolId} onChange={(id) => set("schoolId", id)} error={errors.schoolId} stateFilter={form.state} />
+                  {!form.state && <p className="text-xs text-muted-foreground">Pick a state above to see schools there.</p>}
+                </div>
+              </>
+            )}
+
             <div className="space-y-1.5">
               <Label>Area / landmark (optional)</Label>
               <Input value={form.area} onChange={(e) => set("area", e.target.value)} placeholder="e.g. Akoka, Mayfair, Bodija" />
@@ -168,7 +217,7 @@ export function ListingWizard() {
           </div>
         )}
 
-        {step === 2 && (
+        {step === 1 && (
           <div className="space-y-4">
             <div>
               <h2 className="text-xl font-bold">Tell us about the room</h2>
@@ -204,7 +253,7 @@ export function ListingWizard() {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 2 && (
           <div className="space-y-4">
             <div>
               <h2 className="text-xl font-bold">Add photos</h2>
@@ -215,7 +264,7 @@ export function ListingWizard() {
           </div>
         )}
 
-        {step === 4 && (
+        {step === 3 && (
           <div className="space-y-4">
             <div>
               <h2 className="text-xl font-bold">Price & availability</h2>
@@ -253,7 +302,7 @@ export function ListingWizard() {
           </div>
         )}
 
-        {step === 5 && (
+        {step === 4 && (
           <div className="space-y-4">
             <div>
               <h2 className="text-xl font-bold">Review your listing</h2>

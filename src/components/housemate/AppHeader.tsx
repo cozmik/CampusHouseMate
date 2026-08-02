@@ -20,7 +20,7 @@ export function AppHeader() {
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 glass-nav">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
         <Logo />
         <nav className="ml-4 hidden items-center gap-1 md:flex">
@@ -44,7 +44,7 @@ export function AppHeader() {
           {currentUser ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-full border border-border bg-card p-1 pr-3 shadow-card transition-shadow hover:shadow-elevated">
+                <button className="flex items-center gap-2 rounded-full border border-white/50 bg-card/70 p-1 pr-3 shadow-card backdrop-blur-md transition-shadow hover:shadow-elevated">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={currentUser.avatarUrl} alt={currentUser.fullName} />
                     <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">

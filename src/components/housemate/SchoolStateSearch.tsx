@@ -35,7 +35,7 @@ export function SchoolStateSearch() {
   };
 
   return (
-    <div className="w-full rounded-3xl border border-border/70 bg-card p-2 shadow-elevated">
+    <div className="w-full rounded-3xl glass-strong p-2">
       <div className="grid grid-cols-2 gap-1 rounded-2xl bg-muted p-1">
         {([
           { id: "school", label: "By School", icon: SchoolIcon },
