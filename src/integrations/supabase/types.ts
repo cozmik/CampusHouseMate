@@ -3360,7 +3360,273 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      contact_details: {
+        Row: {
+          phone: string | null
+          updated_at: string
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          lister_id: string
+          listing_id: string
+          seeker_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lister_id: string
+          listing_id: string
+          seeker_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lister_id?: string
+          listing_id?: string
+          seeker_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_listing_id_fkey"
+            columns: ["listing_id"]
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_photos: {
+        Row: {
+          id: string
+          listing_id: string
+          position: number
+          url: string
+        }
+        Insert: {
+          id?: string
+          listing_id: string
+          position?: number
+          url: string
+        }
+        Update: {
+          id?: string
+          listing_id?: string
+          position?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_photos_listing_id_fkey"
+            columns: ["listing_id"]
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listings: {
+        Row: {
+          area: string | null
+          available_from: string
+          available_until: string | null
+          created_at: string
+          description: string | null
+          gender_preference: string
+          id: string
+          lga: string
+          owner_id: string
+          price: number
+          price_period: string
+          room_type: string
+          school_id: string
+          seeker_preferences: Json | null
+          state: string
+          status: string
+          title: string
+        }
+        Insert: {
+          area?: string | null
+          available_from: string
+          available_until?: string | null
+          created_at?: string
+          description?: string | null
+          gender_preference?: string
+          id?: string
+          lga: string
+          owner_id: string
+          price?: number
+          price_period: string
+          room_type: string
+          school_id: string
+          seeker_preferences?: Json | null
+          state: string
+          status?: string
+          title: string
+        }
+        Update: {
+          area?: string | null
+          available_from?: string
+          available_until?: string | null
+          created_at?: string
+          description?: string | null
+          gender_preference?: string
+          id?: string
+          lga?: string
+          owner_id?: string
+          price?: number
+          price_period?: string
+          room_type?: string
+          school_id?: string
+          seeker_preferences?: Json | null
+          state?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listings_school_id_fkey"
+            columns: ["school_id"]
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          sender_id: string
+          type: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          sender_id: string
+          type?: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          full_name: string
+          id: string
+          school_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          full_name?: string
+          id: string
+          school_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          school_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_school_id_fkey"
+            columns: ["school_id"]
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_listings: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_listings_listing_id_fkey"
+            columns: ["listing_id"]
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schools: {
+        Row: {
+          id: string
+          name: string
+          state: string
+          type: string
+        }
+        Insert: {
+          id: string
+          name: string
+          state: string
+          type?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          state?: string
+          type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

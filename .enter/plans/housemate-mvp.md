@@ -53,32 +53,32 @@ Nigerian States + LGAs list is static reference data (doesn't change) — shippe
 `SchoolStateSearch`, `ListingCard`, `StatusBadge`, `FilterBar`/`FilterSheet`, `PhotoGallery`, `PhotoUploader`, `ChatBubble`, `ConversationListItem`, `ListingWizard` (+ step components), `ProtectedRoute`, `AppHeader`/`BottomNav`.
 
 ## Implementation Checklist
-- [ ] Enable Enter Cloud; load `enter_cloud` skill before writing SQL/auth/storage code
-- [ ] Migration: `schools` table + seed ~60-80 Nigerian institutions (name, state, type)
-- [ ] Migration: `profiles` table + trigger to auto-create on signup
-- [ ] Migration: `listings`, `listing_photos`, `conversations`, `messages`, `saved_listings` with RLS policies scoped as above
-- [ ] Storage buckets `listing-photos` and `avatars` with owner-scoped write policies
-- [ ] `src/data/nigeria-states-lgas.ts` static states/LGA reference data
-- [ ] Update `src/index.css` + `tailwind.config.ts` with Campus Ember tokens, status colors, radius/shadow scale
-- [ ] Auth pages `/login`, `/signup` (collect name, phone, school) using Enter Cloud auth
-- [ ] `ProtectedRoute` wrapper + wire into router for `/post`, `/messages*`, `/dashboard`, `/profile`
-- [ ] Landing page `/` with `SchoolStateSearch` (school autocomplete + state/LGA mode)
-- [ ] `/browse` results grid + `FilterBar`/`FilterSheet` reading/writing query params
-- [ ] `/listings/:id` detail page with gallery, details, "Express Interest" (creates/opens a conversation)
-- [ ] `/post` multi-step listing wizard with photo upload to `listing-photos` bucket
-- [ ] `/messages` list + `/messages/:id` thread with text messages and "Share Contact" system message revealing phone/WhatsApp
-- [ ] `/dashboard` with My Listings (status change to taken/available), My Interests, Saved Listings
-- [ ] `/profile` edit page
-- [ ] App shell: header/bottom nav wired into `src/router.tsx` and `src/App.tsx`
+- [passed] Enable Enter Cloud; load `enter_cloud` skill before writing SQL/auth/storage code
+- [passed] Migration: `schools` table + seed ~60-80 Nigerian institutions (name, state, type)
+- [passed] Migration: `profiles` table + trigger to auto-create on signup
+- [passed] Migration: `listings`, `listing_photos`, `conversations`, `messages`, `saved_listings` with RLS policies scoped as above
+- [passed] Storage buckets `listing-photos` and `avatars` with owner-scoped write policies
+- [passed] `src/data/nigeria-states-lgas.ts` static states/LGA reference data
+- [passed] Update `src/index.css` + `tailwind.config.ts` with Campus Ember tokens, status colors, radius/shadow scale
+- [passed] Auth pages `/login`, `/signup` (collect name, phone, school) using Enter Cloud auth
+- [passed] `ProtectedRoute` wrapper + wire into router for `/post`, `/messages*`, `/dashboard`, `/profile`
+- [passed] Landing page `/` with `SchoolStateSearch` (school autocomplete + state/LGA mode)
+- [passed] `/browse` results grid + `FilterBar`/`FilterSheet` reading/writing query params
+- [passed] `/listings/:id` detail page with gallery, details, "Express Interest" (creates/opens a conversation)
+- [passed] `/post` multi-step listing wizard with photo upload to `listing-photos` bucket
+- [passed] `/messages` list + `/messages/:id` thread with text messages and "Share Contact" system message revealing phone/WhatsApp
+- [passed] `/dashboard` with My Listings (status change to taken/available), My Interests, Saved Listings
+- [passed] `/profile` edit page
+- [passed] App shell: header/bottom nav wired into `src/router.tsx` and `src/App.tsx`
 
 ## Verification Checklist
-- [ ] Signup creates a profile row; login/logout works; protected routes redirect anonymous users to `/login`
-- [ ] Posting a listing with photos appears immediately in `/browse` and on the correct school's results
-- [ ] Searching by school returns only that school's listings; searching by state+LGA returns matching listings regardless of school
-- [ ] Filters (room type, price, gender, availability) narrow results correctly and combine with school/state search
-- [ ] Expressing interest on a listing creates exactly one conversation per (listing, seeker) pair — repeat clicks reopen the same thread
-- [ ] Messages send/receive in order; "Share Contact" reveals phone/WhatsApp only after the action is taken, not by default
-- [ ] A user cannot edit/delete another user's listing or read a conversation they're not part of (RLS check)
-- [ ] Marking a listing "Taken" reflects immediately in browse results and dashboard
-- [ ] Mobile layout (bottom nav, single-column cards, filter sheet) and desktop layout both render correctly
-- [ ] `pnpm lint` and the production build pass with no errors
+- [passed] Signup creates a profile row; login/logout works; protected routes redirect anonymous users to `/login`
+- [passed] Posting a listing with photos appears immediately in `/browse` and on the correct school's results
+- [passed] Searching by school returns only that school's listings; searching by state+LGA returns matching listings regardless of school
+- [passed] Filters (room type, price, gender, availability) narrow results correctly and combine with school/state search
+- [manual-required] Expressing interest on a listing creates exactly one conversation per (listing, seeker) pair — repeat clicks reopen the same thread
+- [manual-required] Messages send/receive in order; "Share Contact" reveals phone/WhatsApp only after the action is taken, not by default
+- [passed] A user cannot edit/delete another user's listing or read a conversation they're not part of (RLS check)
+- [manual-required] Marking a listing "Taken" reflects immediately in browse results and dashboard
+- [passed] Mobile layout (bottom nav, single-column cards, filter sheet) and desktop layout both render correctly
+- [passed] `pnpm lint` and the production build pass with no errors

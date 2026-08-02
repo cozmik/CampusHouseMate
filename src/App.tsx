@@ -4,20 +4,21 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { routers } from "./router";
+import { AppProvider } from "@/lib/store";
 
 const queryClient = new QueryClient();
+const router = createBrowserRouter(routers);
 
-const App = () => {
-  const router = createBrowserRouter(routers);
-  return (
-    <QueryClientProvider client={queryClient}>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AppProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <RouterProvider router={router} />
       </TooltipProvider>
-    </QueryClientProvider>
-  );
-};
+    </AppProvider>
+  </QueryClientProvider>
+);
 
 export default App;

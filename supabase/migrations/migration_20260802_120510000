@@ -1,0 +1,244 @@
+-- ============ SCHOOLS (seeded reference, public read-only) ============
+create table if not exists public.schools (
+  id text primary key,
+  name text not null,
+  state text not null,
+  type text not null default 'university'
+);
+alter table public.schools enable row level security;
+drop policy if exists "schools_public_read" on public.schools;
+create policy "schools_public_read" on public.schools for select using (true);
+
+-- ============ PROFILES (public display info, 1:1 with auth.users) ============
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  full_name text not null default 'Student',
+  avatar_url text,
+  school_id text references public.schools(id),
+  bio text,
+  created_at timestamptz not null default now()
+);
+alter table public.profiles enable row level security;
+drop policy if exists "profiles_public_read" on public.profiles;
+create policy "profiles_public_read" on public.profiles for select using (true);
+drop policy if exists "profiles_owner_insert" on public.profiles;
+create policy "profiles_owner_insert" on public.profiles for insert with check (auth.uid() = id);
+drop policy if exists "profiles_owner_update" on public.profiles;
+create policy "profiles_owner_update" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
+
+-- ============ CONTACT DETAILS (phone/whatsapp, owner-only) ============
+create table if not exists public.contact_details (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  phone text,
+  whatsapp text,
+  updated_at timestamptz not null default now()
+);
+alter table public.contact_details enable row level security;
+drop policy if exists "contact_owner_read" on public.contact_details;
+create policy "contact_owner_read" on public.contact_details for select using (auth.uid() = user_id);
+drop policy if exists "contact_owner_insert" on public.contact_details;
+create policy "contact_owner_insert" on public.contact_details for insert with check (auth.uid() = user_id);
+drop policy if exists "contact_owner_update" on public.contact_details;
+create policy "contact_owner_update" on public.contact_details for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ============ AUTH USER -> PROFILE/CONTACT TRIGGER ============
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, full_name, avatar_url, school_id, bio)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'full_name', 'Student'),
+    new.raw_user_meta_data->>'avatar_url',
+    new.raw_user_meta_data->>'school_id',
+    new.raw_user_meta_data->>'bio'
+  )
+  on conflict (id) do update set
+    full_name = coalesce(excluded.full_name, public.profiles.full_name),
+    avatar_url = coalesce(excluded.avatar_url, public.profiles.avatar_url),
+    school_id = coalesce(excluded.school_id, public.profiles.school_id),
+    bio = coalesce(excluded.bio, public.profiles.bio);
+
+  insert into public.contact_details (user_id, phone, whatsapp)
+  values (
+    new.id,
+    new.raw_user_meta_data->>'phone',
+    new.raw_user_meta_data->>'whatsapp'
+  )
+  on conflict (user_id) do update set
+    phone = coalesce(excluded.phone, public.contact_details.phone),
+    whatsapp = coalesce(excluded.whatsapp, public.contact_details.whatsapp),
+    updated_at = now();
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_user();
+
+-- ============ LISTINGS ============
+create table if not exists public.listings (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  school_id text not null references public.schools(id),
+  title text not null,
+  description text,
+  room_type text not null,
+  gender_preference text not null default 'any',
+  price numeric(12,2) not null default 0 check (price >= 0),
+  price_period text not null,
+  state text not null,
+  lga text not null,
+  area text,
+  available_from date not null,
+  available_until date,
+  status text not null default 'available' check (status in ('available','pending','taken')),
+  seeker_preferences jsonb,
+  created_at timestamptz not null default now()
+);
+alter table public.listings enable row level security;
+drop policy if exists "listings_public_read" on public.listings;
+create policy "listings_public_read" on public.listings for select using (true);
+drop policy if exists "listings_owner_insert" on public.listings;
+create policy "listings_owner_insert" on public.listings for insert with check (auth.uid() = owner_id);
+drop policy if exists "listings_owner_update" on public.listings;
+create policy "listings_owner_update" on public.listings for update using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
+drop policy if exists "listings_owner_delete" on public.listings;
+create policy "listings_owner_delete" on public.listings for delete using (auth.uid() = owner_id);
+create index if not exists listings_school_id_idx on public.listings(school_id);
+create index if not exists listings_state_lga_idx on public.listings(state, lga);
+create index if not exists listings_status_idx on public.listings(status);
+create index if not exists listings_created_at_idx on public.listings(created_at desc);
+
+-- ============ LISTING PHOTOS ============
+create table if not exists public.listing_photos (
+  id uuid primary key default gen_random_uuid(),
+  listing_id uuid not null references public.listings(id) on delete cascade,
+  url text not null,
+  position int not null default 0
+);
+alter table public.listing_photos enable row level security;
+drop policy if exists "photos_public_read" on public.listing_photos;
+create policy "photos_public_read" on public.listing_photos for select using (true);
+drop policy if exists "photos_owner_insert" on public.listing_photos;
+create policy "photos_owner_insert" on public.listing_photos for insert with check (
+  exists (select 1 from public.listings l where l.id = listing_id and l.owner_id = auth.uid())
+);
+drop policy if exists "photos_owner_update" on public.listing_photos;
+create policy "photos_owner_update" on public.listing_photos for update using (
+  exists (select 1 from public.listings l where l.id = listing_id and l.owner_id = auth.uid())
+) with check (
+  exists (select 1 from public.listings l where l.id = listing_id and l.owner_id = auth.uid())
+);
+drop policy if exists "photos_owner_delete" on public.listing_photos;
+create policy "photos_owner_delete" on public.listing_photos for delete using (
+  exists (select 1 from public.listings l where l.id = listing_id and l.owner_id = auth.uid())
+);
+create index if not exists listing_photos_listing_idx on public.listing_photos(listing_id);
+
+-- ============ CONVERSATIONS ============
+create table if not exists public.conversations (
+  id uuid primary key default gen_random_uuid(),
+  listing_id uuid not null references public.listings(id) on delete cascade,
+  seeker_id uuid not null references auth.users(id) on delete cascade,
+  lister_id uuid not null references auth.users(id) on delete cascade,
+  status text not null default 'active' check (status in ('active','contact_shared')),
+  created_at timestamptz not null default now(),
+  unique (listing_id, seeker_id)
+);
+alter table public.conversations enable row level security;
+drop policy if exists "conv_participants_read" on public.conversations;
+create policy "conv_participants_read" on public.conversations for select using (auth.uid() = seeker_id or auth.uid() = lister_id);
+drop policy if exists "conv_seeker_insert" on public.conversations;
+create policy "conv_seeker_insert" on public.conversations for insert with check (auth.uid() = seeker_id);
+drop policy if exists "conv_participants_update" on public.conversations;
+create policy "conv_participants_update" on public.conversations for update using (auth.uid() = seeker_id or auth.uid() = lister_id) with check (auth.uid() = seeker_id or auth.uid() = lister_id);
+create index if not exists conversations_seeker_idx on public.conversations(seeker_id);
+create index if not exists conversations_lister_idx on public.conversations(lister_id);
+
+-- ============ MESSAGES ============
+create table if not exists public.messages (
+  id uuid primary key default gen_random_uuid(),
+  conversation_id uuid not null references public.conversations(id) on delete cascade,
+  sender_id uuid not null references auth.users(id) on delete cascade,
+  content text not null,
+  type text not null default 'text' check (type in ('text','contact_share','system')),
+  created_at timestamptz not null default now()
+);
+alter table public.messages enable row level security;
+drop policy if exists "msg_participants_read" on public.messages;
+create policy "msg_participants_read" on public.messages for select using (
+  exists (select 1 from public.conversations c where c.id = conversation_id and (c.seeker_id = auth.uid() or c.lister_id = auth.uid()))
+);
+drop policy if exists "msg_participant_insert" on public.messages;
+create policy "msg_participant_insert" on public.messages for insert with check (
+  auth.uid() = sender_id and exists (select 1 from public.conversations c where c.id = conversation_id and (c.seeker_id = auth.uid() or c.lister_id = auth.uid()))
+);
+create index if not exists messages_conversation_idx on public.messages(conversation_id, created_at);
+
+-- ============ SAVED LISTINGS ============
+create table if not exists public.saved_listings (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  listing_id uuid not null references public.listings(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (user_id, listing_id)
+);
+alter table public.saved_listings enable row level security;
+drop policy if exists "saved_own_read" on public.saved_listings;
+create policy "saved_own_read" on public.saved_listings for select using (auth.uid() = user_id);
+drop policy if exists "saved_own_insert" on public.saved_listings;
+create policy "saved_own_insert" on public.saved_listings for insert with check (auth.uid() = user_id);
+drop policy if exists "saved_own_delete" on public.saved_listings;
+create policy "saved_own_delete" on public.saved_listings for delete using (auth.uid() = user_id);
+create index if not exists saved_user_idx on public.saved_listings(user_id);
+
+-- ============ REALTIME ============
+do $$
+begin
+  begin execute 'alter publication supabase_realtime add table public.messages'; exception when others then null; end;
+  begin execute 'alter publication supabase_realtime add table public.conversations'; exception when others then null; end;
+end $$;
+
+-- ============ STORAGE BUCKETS (listing photos + avatars) ============
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('listing-photos', 'listing-photos', true, 10 * 1024 * 1024, array['image/jpeg','image/png','image/webp','image/gif']::text[])
+on conflict (id) do nothing;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', true, 5 * 1024 * 1024, array['image/jpeg','image/png','image/webp','image/gif']::text[])
+on conflict (id) do nothing;
+
+do $$
+begin
+  if not exists (select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='media_public_read') then
+    execute $p$ create policy "media_public_read" on storage.objects for select to public using (bucket_id in ('listing-photos','avatars')) $p$;
+  end if;
+
+  if not exists (select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='listing_photos_owner_insert') then
+    execute $p$ create policy "listing_photos_owner_insert" on storage.objects for insert to authenticated with check (bucket_id = 'listing-photos' and name like (auth.uid()::text || '/%')) $p$;
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='listing_photos_owner_update') then
+    execute $p$ create policy "listing_photos_owner_update" on storage.objects for update to authenticated using (bucket_id = 'listing-photos' and name like (auth.uid()::text || '/%')) with check (bucket_id = 'listing-photos' and name like (auth.uid()::text || '/%')) $p$;
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='listing_photos_owner_delete') then
+    execute $p$ create policy "listing_photos_owner_delete" on storage.objects for delete to authenticated using (bucket_id = 'listing-photos' and name like (auth.uid()::text || '/%')) $p$;
+  end if;
+
+  if not exists (select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='avatars_owner_insert') then
+    execute $p$ create policy "avatars_owner_insert" on storage.objects for insert to authenticated with check (bucket_id = 'avatars' and name like (auth.uid()::text || '/%')) $p$;
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='avatars_owner_update') then
+    execute $p$ create policy "avatars_owner_update" on storage.objects for update to authenticated using (bucket_id = 'avatars' and name like (auth.uid()::text || '/%')) with check (bucket_id = 'avatars' and name like (auth.uid()::text || '/%')) $p$;
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='avatars_owner_delete') then
+    execute $p$ create policy "avatars_owner_delete" on storage.objects for delete to authenticated using (bucket_id = 'avatars' and name like (auth.uid()::text || '/%')) $p$;
+  end if;
+end $$;
