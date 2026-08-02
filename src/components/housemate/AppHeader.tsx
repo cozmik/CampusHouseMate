@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Flag, LayoutDashboard, LogOut, MessageSquare, Plus, Search, User as UserIcon } from "lucide-react";
+import { Flag, LayoutDashboard, LogOut, MessageSquare, Plus, Search, ShieldCheck, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -72,6 +72,11 @@ export function AppHeader() {
                 <DropdownMenuItem onClick={() => navigate("/messages")}>
                   <MessageSquare className="mr-2 h-4 w-4" /> Messages
                 </DropdownMenuItem>
+                {currentUser.isAdmin && (
+                  <DropdownMenuItem onClick={() => navigate("/admin/reports")}>
+                    <ShieldCheck className="mr-2 h-4 w-4" /> Review reports
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <ReportDialog
                   targetType="general"

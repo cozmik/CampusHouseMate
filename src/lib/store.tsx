@@ -17,6 +17,8 @@ import type {
   ListingStatus,
   Message,
   Profile,
+  Report,
+  ReportStatus,
   ReportTargetType,
   RoomType,
   SavedListing,
@@ -58,6 +60,7 @@ interface RawProfile {
   avatar_url: string | null;
   school_id: string | null;
   bio: string | null;
+  is_admin?: boolean;
 }
 interface RawConversation {
   id: string;
@@ -73,6 +76,16 @@ interface RawMessage {
   sender_id: string;
   content: string;
   type: string;
+  created_at: string;
+}
+interface RawReport {
+  id: string;
+  reporter_id: string;
+  target_type: string;
+  target_id: string | null;
+  category: string;
+  message: string;
+  status: string;
   created_at: string;
 }
 
@@ -109,6 +122,7 @@ function mapProfile(row: RawProfile, email?: string): Profile {
     avatarUrl: row.avatar_url ?? undefined,
     schoolId: row.school_id ?? undefined,
     bio: row.bio ?? undefined,
+    isAdmin: row.is_admin ?? false,
   };
 }
 function mapConversation(row: RawConversation): Conversation {
@@ -128,6 +142,18 @@ function mapMessage(row: RawMessage): Message {
     senderId: row.sender_id,
     content: row.content,
     type: row.type as Message["type"],
+    createdAt: row.created_at,
+  };
+}
+function mapReport(row: RawReport): Report {
+  return {
+    id: row.id,
+    reporterId: row.reporter_id,
+    targetType: row.target_type as ReportTargetType,
+    targetId: row.target_id ?? undefined,
+    category: row.category,
+    message: row.message,
+    status: row.status as ReportStatus,
     createdAt: row.created_at,
   };
 }
@@ -202,6 +228,8 @@ interface AppContextValue {
     category: string;
     message: string;
   }) => Promise<{ ok: boolean; error?: string }>;
+  fetchAllReports: () => Promise<Report[]>;
+  updateReportStatus: (id: string, status: ReportStatus) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -934,6 +962,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [currentUser],
   );
 
+  const fetchAllReports = useCallback(async (): Promise<Report[]> => {
+    const { data, error } = await supabase
+      .from("reports")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error || !data) return [];
+    const reports = (data as unknown as RawReport[]).map(mapReport);
+
+    // Cache reporter profiles for display.
+    const reporterIds = [...new Set(reports.map((r) => r.reporterId))];
+    if (reporterIds.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", reporterIds);
+      if (profs) cacheProfiles(profs as unknown as RawProfile[]);
+    }
+    return reports;
+  }, [cacheProfiles]);
+
+  const updateReportStatus = useCallback(async (id: string, status: ReportStatus) => {
+    await supabase.from("reports").update({ status }).eq("id", id);
+  }, []);
+
   const value = useMemo<AppContextValue>(
     () => ({
       authReady,
@@ -968,6 +1020,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       getProfile,
       getSchool: getSchoolData,
       submitReport,
+      fetchAllReports,
+      updateReportStatus,
     }),
     [
       authReady,
@@ -1000,6 +1054,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       getSavedListings,
       getProfile,
       submitReport,
+      fetchAllReports,
+      updateReportStatus,
     ],
   );
 

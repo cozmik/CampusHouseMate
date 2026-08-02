@@ -81,6 +81,7 @@ export interface Profile {
   schoolId?: string;
   avatarUrl?: string;
   bio?: string;
+  isAdmin?: boolean;
 }
 
 export interface Message {

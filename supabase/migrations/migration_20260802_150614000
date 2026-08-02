@@ -1,0 +1,44 @@
+-- Add is_admin flag to profiles
+alter table public.profiles add column if not exists is_admin boolean not null default false;
+
+-- Prevent regular authenticated users from self-elevating via their own profile update.
+-- Only non-PostgREST (migration/service) writes can change is_admin.
+create or replace function public.protect_is_admin()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.role() = 'authenticated' then
+    new.is_admin := old.is_admin;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists protect_is_admin_trigger on public.profiles;
+create trigger protect_is_admin_trigger
+before update on public.profiles
+for each row execute function public.protect_is_admin();
+
+-- Allow admins to read and update all reports (in addition to reporters reading their own)
+drop policy if exists "reports_admin_read" on public.reports;
+create policy "reports_admin_read" on public.reports
+  for select
+  using (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+  );
+
+drop policy if exists "reports_admin_update" on public.reports;
+create policy "reports_admin_update" on public.reports
+  for update
+  using (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+  )
+  with check (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+  );
+
+-- Grant the existing demo account admin access so the dashboard is reachable immediately.
+update public.profiles set is_admin = true where id = '6d905653-927e-45f5-9d84-4d41ad25d03c';
