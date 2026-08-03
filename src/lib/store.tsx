@@ -9,6 +9,7 @@ import {
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { schools as schoolsData, getSchool as getSchoolData } from "@/data/schools";
+import { toast } from "sonner";
 import { uid } from "./format";
 import type {
   Conversation,
@@ -25,9 +26,6 @@ import type {
   School,
   SeekerPreferences,
 } from "./types";
-
-const DEMO_EMAIL = "demo@housemate.app";
-const DEMO_PASSWORD = "demo1234";
 
 interface RawListing {
   id: string;
@@ -61,6 +59,7 @@ interface RawProfile {
   school_id: string | null;
   bio: string | null;
   is_admin?: boolean;
+  is_suspended?: boolean;
 }
 interface RawConversation {
   id: string;
@@ -123,6 +122,7 @@ function mapProfile(row: RawProfile, email?: string): Profile {
     schoolId: row.school_id ?? undefined,
     bio: row.bio ?? undefined,
     isAdmin: row.is_admin ?? false,
+    isSuspended: row.is_suspended ?? false,
   };
 }
 function mapConversation(row: RawConversation): Conversation {
@@ -191,7 +191,6 @@ interface AppContextValue {
 
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   signup: (input: SignupInput) => Promise<{ ok: boolean; error?: string }>;
-  loginAsDemo: () => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (patch: Partial<Profile>) => Promise<void>;
   uploadAvatar: (file: File) => Promise<string>;
@@ -230,6 +229,10 @@ interface AppContextValue {
   }) => Promise<{ ok: boolean; error?: string }>;
   fetchAllReports: () => Promise<Report[]>;
   updateReportStatus: (id: string, status: ReportStatus) => Promise<void>;
+
+  fetchAllUsers: () => Promise<Profile[]>;
+  setUserAdmin: (id: string, isAdmin: boolean) => Promise<void>;
+  setUserSuspended: (id: string, isSuspended: boolean) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -277,6 +280,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           .from("profiles")
           .insert({ id: userId, full_name: "Student" });
         profile = { id: userId, fullName: "Student", email };
+      }
+      if (profile.isSuspended) {
+        toast.error("Your account has been suspended", {
+          description: "Contact support if you think this is a mistake.",
+        });
+        await supabase.auth.signOut();
+        return;
       }
       if (contact) {
         const c = contact as { phone?: string | null; whatsapp?: string | null };
@@ -430,27 +440,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (error) return { ok: false, error: error.message };
     if (!data.user) return { ok: false, error: "Could not create account." };
     return { ok: true };
-  }, []);
-
-  const loginAsDemo = useCallback(async () => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: DEMO_EMAIL,
-      password: DEMO_PASSWORD,
-    });
-    if (!error) return;
-    await supabase.auth.signUp({
-      email: DEMO_EMAIL,
-      password: DEMO_PASSWORD,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          full_name: "Joy Eze",
-          phone: "0813 555 0142",
-          whatsapp: "0813 555 0142",
-          school_id: "university-of-lagos",
-        },
-      },
-    });
   }, []);
 
   const logout = useCallback(async () => {
@@ -986,6 +975,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await supabase.from("reports").update({ status }).eq("id", id);
   }, []);
 
+  const fetchAllUsers = useCallback(async (): Promise<Profile[]> => {
+    const [{ data: profs, error }, { data: contacts }] = await Promise.all([
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+      supabase.from("contact_details").select("*"),
+    ]);
+    if (error || !profs) return [];
+    const contactByUser = new Map(
+      (contacts ?? []).map((c) => {
+        const row = c as unknown as { user_id: string; email: string | null; phone: string | null };
+        return [row.user_id, row];
+      }),
+    );
+    const users = (profs as unknown as RawProfile[]).map((row) => {
+      const contact = contactByUser.get(row.id);
+      return mapProfile(row, contact?.email ?? undefined);
+    });
+    cacheProfiles(profs as unknown as RawProfile[]);
+    return users;
+  }, [cacheProfiles]);
+
+  const setUserAdmin = useCallback(async (id: string, isAdmin: boolean) => {
+    await supabase.from("profiles").update({ is_admin: isAdmin }).eq("id", id);
+  }, []);
+
+  const setUserSuspended = useCallback(async (id: string, isSuspended: boolean) => {
+    await supabase.from("profiles").update({ is_suspended: isSuspended }).eq("id", id);
+  }, []);
+
   const value = useMemo<AppContextValue>(
     () => ({
       authReady,
@@ -993,7 +1010,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       schools: schoolsData,
       login,
       signup,
-      loginAsDemo,
       logout,
       updateProfile,
       uploadAvatar,
@@ -1022,13 +1038,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       submitReport,
       fetchAllReports,
       updateReportStatus,
+      fetchAllUsers,
+      setUserAdmin,
+      setUserSuspended,
     }),
     [
       authReady,
       currentUser,
       login,
       signup,
-      loginAsDemo,
       logout,
       updateProfile,
       uploadAvatar,
@@ -1056,6 +1074,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       submitReport,
       fetchAllReports,
       updateReportStatus,
+      fetchAllUsers,
+      setUserAdmin,
+      setUserSuspended,
     ],
   );
 

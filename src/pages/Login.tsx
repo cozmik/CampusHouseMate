@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Mail, Lock, Sparkles, ArrowRight } from "lucide-react";
+import { Mail, Lock, ArrowRight } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/housemate/Logo";
 
 export default function Login() {
-  const { login, loginAsDemo } = useApp();
+  const { login } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? "/dashboard";
@@ -26,12 +26,6 @@ export default function Login() {
     setLoading(false);
     if (res.ok) navigate(from, { replace: true });
     else setError(res.error ?? "Could not log in.");
-  };
-
-  const demo = async () => {
-    setLoading(true);
-    await loginAsDemo();
-    navigate("/dashboard", { replace: true });
   };
 
   return (
@@ -63,10 +57,6 @@ export default function Login() {
               {loading ? "Logging in…" : "Log in"}<ArrowRight className="h-4 w-4" />
             </Button>
           </form>
-          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground"><div className="h-px flex-1 bg-border" />or<div className="h-px flex-1 bg-border" /></div>
-          <Button variant="outline" className="w-full" onClick={() => void demo()} disabled={loading}>
-            <Sparkles className="h-4 w-4 text-primary" />Continue as demo student
-          </Button>
           <p className="mt-5 text-center text-sm text-muted-foreground">New here? <Link to="/signup" className="font-semibold text-primary">Create an account</Link></p>
         </div>
       </div>

@@ -3362,18 +3362,21 @@ export type Database = {
     Tables: {
       contact_details: {
         Row: {
+          email: string | null
           phone: string | null
           updated_at: string
           user_id: string
           whatsapp: string | null
         }
         Insert: {
+          email?: string | null
           phone?: string | null
           updated_at?: string
           user_id: string
           whatsapp?: string | null
         }
         Update: {
+          email?: string | null
           phone?: string | null
           updated_at?: string
           user_id?: string
@@ -3552,6 +3555,7 @@ export type Database = {
           full_name: string
           id: string
           is_admin: boolean
+          is_suspended: boolean
           school_id: string | null
         }
         Insert: {
@@ -3561,6 +3565,7 @@ export type Database = {
           full_name?: string
           id: string
           is_admin?: boolean
+          is_suspended?: boolean
           school_id?: string | null
         }
         Update: {
@@ -3570,6 +3575,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_admin?: boolean
+          is_suspended?: boolean
           school_id?: string | null
         }
         Relationships: [
@@ -3680,39 +3686,6 @@ export type Database = {
   realtime: {
     Tables: {
       messages: {
-        Row: {
-          event: string | null
-          extension: string
-          id: string
-          inserted_at: string
-          payload: Json | null
-          private: boolean | null
-          topic: string
-          updated_at: string
-        }
-        Insert: {
-          event?: string | null
-          extension: string
-          id?: string
-          inserted_at?: string
-          payload?: Json | null
-          private?: boolean | null
-          topic: string
-          updated_at?: string
-        }
-        Update: {
-          event?: string | null
-          extension?: string
-          id?: string
-          inserted_at?: string
-          payload?: Json | null
-          private?: boolean | null
-          topic?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      messages_2026_07_30: {
         Row: {
           event: string | null
           extension: string
@@ -3878,6 +3851,39 @@ export type Database = {
         Relationships: []
       }
       messages_2026_08_05: {
+        Row: {
+          event: string | null
+          extension: string
+          id: string
+          inserted_at: string
+          payload: Json | null
+          private: boolean | null
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          event?: string | null
+          extension: string
+          id?: string
+          inserted_at?: string
+          payload?: Json | null
+          private?: boolean | null
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          event?: string | null
+          extension?: string
+          id?: string
+          inserted_at?: string
+          payload?: Json | null
+          private?: boolean | null
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      messages_2026_08_06: {
         Row: {
           event: string | null
           extension: string

@@ -1,0 +1,27 @@
+alter table public.profiles add column if not exists debug_uid uuid;
+alter table public.profiles add column if not exists debug_role text;
+alter table public.profiles add column if not exists debug_acting_admin boolean;
+
+create or replace function public.protect_admin_fields()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  acting_is_admin boolean;
+begin
+  new.debug_uid := auth.uid();
+  new.debug_role := auth.role();
+  select is_admin into acting_is_admin from public.profiles where id = auth.uid();
+  new.debug_acting_admin := coalesce(acting_is_admin, false);
+
+  if auth.role() = 'authenticated' then
+    if coalesce(acting_is_admin, false) = false then
+      new.is_admin := old.is_admin;
+      new.is_suspended := old.is_suspended;
+    end if;
+  end if;
+  return new;
+end;
+$$;

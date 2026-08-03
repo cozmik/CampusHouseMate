@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, User as UserIcon, Phone, Sparkles, ArrowRight } from "lucide-react";
+import { Mail, Lock, User as UserIcon, Phone, ArrowRight } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Logo } from "@/components/housemate/Logo";
 import { SchoolCombobox } from "@/components/housemate/SchoolCombobox";
 
 export default function Signup() {
-  const { signup, loginAsDemo } = useApp();
+  const { signup } = useApp();
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState("");
@@ -30,12 +30,6 @@ export default function Signup() {
     setLoading(false);
     if (res.ok) navigate("/dashboard", { replace: true });
     else setError(res.error ?? "Could not create account.");
-  };
-
-  const demo = async () => {
-    setLoading(true);
-    await loginAsDemo();
-    navigate("/dashboard", { replace: true });
   };
 
   return (
@@ -91,10 +85,6 @@ export default function Signup() {
               {loading ? "Creating account…" : "Create account"}<ArrowRight className="h-4 w-4" />
             </Button>
           </form>
-          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground"><div className="h-px flex-1 bg-border" />or<div className="h-px flex-1 bg-border" /></div>
-          <Button variant="outline" className="w-full" onClick={() => void demo()} disabled={loading}>
-            <Sparkles className="h-4 w-4 text-primary" />Continue as demo student
-          </Button>
           <p className="mt-5 text-center text-sm text-muted-foreground">Already have an account? <Link to="/login" className="font-semibold text-primary">Log in</Link></p>
         </div>
       </div>

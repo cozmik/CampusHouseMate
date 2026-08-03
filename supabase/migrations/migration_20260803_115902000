@@ -1,0 +1,2 @@
+delete from public.contact_details where user_id = 'b6eb9aa1-cbcc-4628-9c38-57481153ec4b';
+delete from public.profiles where id = 'b6eb9aa1-cbcc-4628-9c38-57481153ec4b';

@@ -1,3 +1,4 @@
+import { Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Browse from "./pages/Browse";
@@ -10,7 +11,9 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
 import AdminReports from "./pages/AdminReports";
+import AdminUsers from "./pages/AdminUsers";
 import { AppLayout } from "@/components/housemate/AppLayout";
+import { AdminLayout } from "@/components/housemate/AdminLayout";
 import { ProtectedRoute } from "@/components/housemate/ProtectedRoute";
 import { AdminRoute } from "@/components/housemate/AdminRoute";
 
@@ -25,7 +28,9 @@ export const routers = [
   { path: "/messages/:id", name: "conversation", element: <AppLayout><ProtectedRoute><Conversation /></ProtectedRoute></AppLayout> },
   { path: "/dashboard", name: "dashboard", element: <AppLayout><ProtectedRoute><Dashboard /></ProtectedRoute></AppLayout> },
   { path: "/profile", name: "profile", element: <AppLayout><ProtectedRoute><Profile /></ProtectedRoute></AppLayout> },
-  { path: "/admin/reports", name: "admin-reports", element: <AppLayout><AdminRoute><AdminReports /></AdminRoute></AppLayout> },
+  { path: "/admin", name: "admin-index", element: <Navigate to="/admin/users" replace /> },
+  { path: "/admin/users", name: "admin-users", element: <AdminRoute><AdminLayout><AdminUsers /></AdminLayout></AdminRoute> },
+  { path: "/admin/reports", name: "admin-reports", element: <AdminRoute><AdminLayout><AdminReports /></AdminLayout></AdminRoute> },
   /* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */
   { path: "*", name: "404", element: <AppLayout><NotFound /></AppLayout> },
 ];

@@ -1,0 +1,50 @@
+-- ============ Fix: allow admins to update OTHER users' profile rows ============
+drop policy if exists "profiles_admin_update" on public.profiles;
+create policy "profiles_admin_update" on public.profiles
+  for update
+  using (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+  )
+  with check (true);
+
+-- ============ Restore the clean (non-debug) trigger function ============
+create or replace function public.protect_admin_fields()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  acting_is_admin boolean;
+begin
+  if auth.role() = 'authenticated' then
+    select is_admin into acting_is_admin from public.profiles where id = auth.uid();
+    if coalesce(acting_is_admin, false) = false then
+      new.is_admin := old.is_admin;
+      new.is_suspended := old.is_suspended;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+-- ============ Remove debug artifacts ============
+alter table public.profiles drop column if exists debug_uid;
+alter table public.profiles drop column if exists debug_role;
+alter table public.profiles drop column if exists debug_acting_admin;
+drop function if exists public.debug_auth_check();
+drop function if exists public.debug_auth_check_definer();
+
+-- ============ Clean up test accounts created while debugging ============
+delete from public.listings where owner_id in (
+  '44cffdd4-b0ae-49a4-9ceb-6f218576348a',
+  'ea422222-24d3-4e23-82fa-89f72d36677f'
+);
+delete from public.contact_details where user_id in (
+  '44cffdd4-b0ae-49a4-9ceb-6f218576348a',
+  'ea422222-24d3-4e23-82fa-89f72d36677f'
+);
+delete from public.profiles where id in (
+  '44cffdd4-b0ae-49a4-9ceb-6f218576348a',
+  'ea422222-24d3-4e23-82fa-89f72d36677f'
+);

@@ -73,8 +73,8 @@ export function AppHeader() {
                   <MessageSquare className="mr-2 h-4 w-4" /> Messages
                 </DropdownMenuItem>
                 {currentUser.isAdmin && (
-                  <DropdownMenuItem onClick={() => navigate("/admin/reports")}>
-                    <ShieldCheck className="mr-2 h-4 w-4" /> Review reports
+                  <DropdownMenuItem onClick={() => navigate("/admin/users")}>
+                    <ShieldCheck className="mr-2 h-4 w-4" /> Admin panel
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />

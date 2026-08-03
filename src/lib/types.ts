@@ -82,6 +82,7 @@ export interface Profile {
   avatarUrl?: string;
   bio?: string;
   isAdmin?: boolean;
+  isSuspended?: boolean;
 }
 
 export interface Message {
