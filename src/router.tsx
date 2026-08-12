@@ -12,6 +12,7 @@ import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
 import AdminReports from "./pages/AdminReports";
 import AdminUsers from "./pages/AdminUsers";
+import VerifyEmail from "./pages/VerifyEmail";
 import { AppLayout } from "@/components/housemate/AppLayout";
 import { AdminLayout } from "@/components/housemate/AdminLayout";
 import { ProtectedRoute } from "@/components/housemate/ProtectedRoute";
@@ -20,6 +21,7 @@ import { AdminRoute } from "@/components/housemate/AdminRoute";
 export const routers = [
   { path: "/login", name: "login", element: <Login /> },
   { path: "/signup", name: "signup", element: <Signup /> },
+  { path: "/verify-email", name: "verify-email", element: <AppLayout><VerifyEmail /></AppLayout> },
   { path: "/", name: "home", element: <AppLayout><Index /></AppLayout> },
   { path: "/browse", name: "browse", element: <AppLayout><Browse /></AppLayout> },
   { path: "/listings/:id", name: "listing", element: <AppLayout><ListingDetail /></AppLayout> },

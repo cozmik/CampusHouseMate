@@ -76,6 +76,7 @@ export interface Profile {
   id: string;
   fullName: string;
   email?: string;
+  emailConfirmedAt?: string;
   phone?: string;
   whatsapp?: string;
   schoolId?: string;

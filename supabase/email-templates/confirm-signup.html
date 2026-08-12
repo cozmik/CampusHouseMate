@@ -1,0 +1,143 @@
+<!--
+  HouseMate — Confirm signup email
+  Paste into Supabase Dashboard → Authentication → Email Templates → Confirm signup
+
+  Variables (Supabase Go templates):
+    {{ .ConfirmationURL }}  — main verify link
+    {{ .Email }}            — recipient email
+    {{ .SiteURL }}          — site URL from project settings
+
+  Optional: replace {{ .SiteURL }}/brand/hmf-dark.png with your hosted logo URL.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Confirm your HouseMate account</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
+</head>
+<body style="margin:0;padding:0;background-color:#F4F9FA;font-family:'Plus Jakarta Sans',Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+  <!-- Preheader (hidden preview text) -->
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">
+    Optional — confirm your email when you have a moment. HouseMate works either way.
+  </div>
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F4F9FA;">
+    <tr>
+      <td align="center" style="padding:40px 16px 48px;">
+
+        <!-- Hero glow (subtle, matches app bg-hero) -->
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;">
+          <tr>
+            <td style="padding:0 0 24px;text-align:center;">
+              <!-- Logo: text fallback; swap for <img src="YOUR_LOGO_URL" alt="HouseMate" width="140" style="display:block;margin:0 auto;" /> -->
+              <span style="font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#152028;">House<span style="color:#13A8BC;">Mate</span></span>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Card -->
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;background-color:#FFFFFF;border-radius:20px;border:1px solid #E3E9ED;box-shadow:0 1px 2px rgba(21,32,40,0.03),0 8px 24px -16px rgba(21,32,40,0.12);">
+          <!-- Gradient accent bar (primary → coral) -->
+          <tr>
+            <td style="height:4px;border-radius:20px 20px 0 0;background:linear-gradient(135deg,#13A8BC 0%,#D94828 100%);font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+
+          <tr>
+            <td style="padding:36px 32px 8px;">
+              <!-- Badge -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background-color:rgba(19,168,188,0.10);border:1px solid rgba(19,168,188,0.20);border-radius:999px;padding:6px 14px;">
+                    <span style="font-size:11px;font-weight:600;color:#13A8BC;letter-spacing:0.02em;text-transform:uppercase;">One quick step</span>
+                  </td>
+                </tr>
+              </table>
+
+              <h1 style="margin:20px 0 12px;font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;color:#152028;">
+                Confirm your email
+              </h1>
+
+              <p style="margin:0 0 8px;font-size:15px;line-height:1.6;color:#6B7A85;">
+                Hi there — welcome to <strong style="color:#152028;">HouseMate</strong>, the student way to find and hand over hostel spaces near campus.
+              </p>
+              <p style="margin:0;font-size:15px;line-height:1.6;color:#6B7A85;">
+                Tap the button below to confirm <strong style="color:#152028;">{{ .Email }}</strong>. It’s optional, but it helps other students trust your profile and makes account recovery easier.
+              </p>
+            </td>
+          </tr>
+
+          <!-- CTA -->
+          <tr>
+            <td align="center" style="padding:28px 32px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="border-radius:12px;background:linear-gradient(135deg,#13A8BC 0%,#D94828 100%);">
+                    <a href="{{ .ConfirmationURL }}" target="_blank" rel="noopener noreferrer"
+                       style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:700;color:#FFFFFF;text-decoration:none;border-radius:12px;">
+                      Confirm my email
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Fallback link -->
+          <tr>
+            <td style="padding:16px 32px 28px;">
+              <p style="margin:0 0 8px;font-size:12px;line-height:1.5;color:#6B7A85;text-align:center;">
+                Button not working? Copy and paste this link into your browser:
+              </p>
+              <p style="margin:0;font-size:11px;line-height:1.5;color:#13A8BC;word-break:break-all;text-align:center;">
+                <a href="{{ .ConfirmationURL }}" style="color:#13A8BC;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Safety note (matches in-app ShieldCheck copy) -->
+          <tr>
+            <td style="padding:0 32px 32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#FFF8F6;border-radius:14px;border:1px solid #F5E8E4;">
+                <tr>
+                  <td style="padding:16px 18px;">
+                    <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#152028;">Stay safe on HouseMate</p>
+                    <p style="margin:0;font-size:12px;line-height:1.55;color:#6B7A85;">
+                      We never handle payments. Meet on or around campus before paying, and share contact details only when you're comfortable inside chat.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Footer -->
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;">
+          <tr>
+            <td style="padding:24px 16px 0;text-align:center;">
+              <p style="margin:0 0 6px;font-size:12px;line-height:1.5;color:#6B7A85;">
+                Didn't create a HouseMate account? You can safely ignore this email.
+              </p>
+              <p style="margin:0;font-size:11px;line-height:1.5;color:#9AA8B2;">
+                © HouseMate · Built for students · <a href="{{ .SiteURL }}" style="color:#13A8BC;text-decoration:none;">{{ .SiteURL }}</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
