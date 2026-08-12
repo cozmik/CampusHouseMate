@@ -113,11 +113,16 @@ function mapListing(row: RawListing): Listing {
     createdAt: row.created_at,
   };
 }
-function mapProfile(row: RawProfile, email?: string): Profile {
+function mapProfile(
+  row: RawProfile,
+  email?: string,
+  emailConfirmedAt?: string | null,
+): Profile {
   return {
     id: row.id,
     fullName: row.full_name,
     email,
+    emailConfirmedAt: emailConfirmedAt ?? undefined,
     avatarUrl: row.avatar_url ?? undefined,
     schoolId: row.school_id ?? undefined,
     bio: row.bio ?? undefined,
@@ -191,6 +196,7 @@ interface AppContextValue {
 
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   signup: (input: SignupInput) => Promise<{ ok: boolean; error?: string }>;
+  resendEmailVerification: (email?: string) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (patch: Partial<Profile>) => Promise<void>;
   uploadAvatar: (file: File) => Promise<string>;
@@ -257,9 +263,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loadUserSession = useCallback(
-    async (session: { user: { id: string; email?: string } }) => {
+    async (session: {
+      user: { id: string; email?: string; email_confirmed_at?: string | null };
+    }) => {
       const userId = session.user.id;
       const email = session.user.email;
+      const emailConfirmedAt = session.user.email_confirmed_at ?? null;
       const [{ data: prof }, { data: contact }] = await Promise.all([
         supabase
           .from("profiles")
@@ -273,13 +282,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
           .maybeSingle(),
       ]);
       let profile: Profile | null = prof
-        ? mapProfile(prof as RawProfile, email)
+        ? mapProfile(prof as RawProfile, email, emailConfirmedAt)
         : null;
       if (!profile) {
         await supabase
           .from("profiles")
           .insert({ id: userId, full_name: "Student" });
-        profile = { id: userId, fullName: "Student", email };
+        profile = {
+          id: userId,
+          fullName: "Student",
+          email,
+          emailConfirmedAt: emailConfirmedAt ?? undefined,
+        };
       }
       if (profile.isSuspended) {
         toast.error("Your account has been suspended", {
@@ -374,6 +388,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setCurrentUser({
           id: u.id,
           email: u.email,
+          emailConfirmedAt:
+            (u as { email_confirmed_at?: string | null }).email_confirmed_at ??
+            undefined,
           fullName: meta.full_name || "Student",
           avatarUrl: meta.avatar_url || undefined,
           schoolId: meta.school_id || undefined,
@@ -390,6 +407,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     return () => sub.subscription.unsubscribe();
   }, [loadUserSession]);
+
+  const resendEmailVerification = useCallback(
+    async (email?: string) => {
+      const targetEmail = (email ?? currentUser?.email)?.trim();
+      if (!targetEmail) {
+        return { ok: false, error: "Missing email address." };
+      }
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: targetEmail,
+      });
+      if (error) return { ok: false, error: error.message };
+      toast.success("Confirmation link sent", {
+        description: "Check your inbox when you have a moment — confirming is optional, but recommended.",
+      });
+      return { ok: true };
+    },
+    [currentUser?.email],
+  );
 
   // Load listings (public)
   const loadListings = useCallback(async () => {
@@ -1010,6 +1046,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       schools: schoolsData,
       login,
       signup,
+      resendEmailVerification,
       logout,
       updateProfile,
       uploadAvatar,
@@ -1047,6 +1084,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       currentUser,
       login,
       signup,
+      resendEmailVerification,
       logout,
       updateProfile,
       uploadAvatar,

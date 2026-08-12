@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/housemate/Logo";
 
 export default function Login() {
-  const { login } = useApp();
+  const { login, resendEmailVerification } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? "/dashboard";
@@ -16,16 +16,44 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resending, setResending] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setNeedsVerification(false);
     setLoading(true);
-    const res = await login(email, password);
+    const trimmedEmail = email.trim();
+    const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
+    if (!okEmail) {
+      setLoading(false);
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    const res = await login(trimmedEmail, password);
     setLoading(false);
-    if (res.ok) navigate(from, { replace: true });
-    else setError(res.error ?? "Could not log in.");
+    if (res.ok) {
+      navigate(from, { replace: true });
+      return;
+    }
+
+    const msg = (res.error ?? "").toString();
+    setError(res.error ?? "Could not log in.");
+    const lower = msg.toLowerCase();
+    setNeedsVerification(
+      lower.includes("confirm") || lower.includes("verification") || lower.includes("verified"),
+    );
+  };
+
+  const onResend = async () => {
+    setResending(true);
+    const res = await resendEmailVerification(email);
+    setResending(false);
+    if (res.ok) navigate(`/verify-email?email=${encodeURIComponent(email.trim())}`, { replace: true });
+    else setError(res.error ?? "Could not send the confirmation link.");
   };
 
   return (
@@ -53,6 +81,33 @@ export default function Login() {
               </div>
             </div>
             {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
+            {needsVerification && (
+              <div className="rounded-lg bg-muted/30 px-3 py-3 text-sm">
+                <p className="text-muted-foreground">
+                  Your account still needs a confirmed email before you can log in. Check your inbox for the link we sent at signup, or request a new one below.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-3 w-full"
+                  onClick={() => void onResend()}
+                  disabled={resending}
+                >
+                  {resending ? "Sending…" : "Send confirmation link"}
+                </Button>
+                <p className="mt-2 text-center text-xs text-muted-foreground">
+                  Need help?{" "}
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto p-0 text-xs"
+                    onClick={() => navigate(`/verify-email?email=${encodeURIComponent(email.trim())}`)}
+                  >
+                    Open email confirmation page
+                  </Button>
+                </p>
+              </div>
+            )}
             <Button type="submit" className="w-full bg-gradient-primary shadow-glow" disabled={loading}>
               {loading ? "Logging in…" : "Log in"}<ArrowRight className="h-4 w-4" />
             </Button>

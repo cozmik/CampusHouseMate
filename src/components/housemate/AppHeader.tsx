@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Flag, LayoutDashboard, LogOut, MessageSquare, Plus, Search, ShieldCheck, User as UserIcon } from "lucide-react";
+import { Flag, LayoutDashboard, LogOut, Mail, MessageSquare, Plus, Search, ShieldCheck, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -63,6 +63,14 @@ export function AppHeader() {
                   <p className="truncate text-xs text-muted-foreground">{currentUser.email}</p>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {!currentUser.emailConfirmedAt && currentUser.email ? (
+                  <DropdownMenuItem
+                    onSelect={(e) => e.preventDefault()}
+                    onClick={() => navigate(`/verify-email?email=${encodeURIComponent(currentUser.email ?? "")}`)}
+                  >
+                    <Mail className="mr-2 h-4 w-4" /> Confirm email (recommended)
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <UserIcon className="mr-2 h-4 w-4" /> Profile
                 </DropdownMenuItem>

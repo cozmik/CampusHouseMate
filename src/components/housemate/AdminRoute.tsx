@@ -1,10 +1,11 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import type { ReactNode } from "react";
 
 export function AdminRoute({ children }: { children: ReactNode }) {
   const { currentUser, authReady } = useApp();
+  const location = useLocation();
   if (!authReady) {
     return (
       <div className="grid min-h-[50vh] place-items-center">

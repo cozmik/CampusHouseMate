@@ -25,8 +25,11 @@ export default function Signup() {
     e.preventDefault();
     setError("");
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    const trimmedEmail = email.trim();
+    const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
+    if (!okEmail) { setError("Please enter a valid email address."); return; }
     setLoading(true);
-    const res = await signup({ fullName, email, password, phone, whatsapp, schoolId });
+    const res = await signup({ fullName, email: trimmedEmail, password, phone, whatsapp, schoolId });
     setLoading(false);
     if (res.ok) navigate("/dashboard", { replace: true });
     else setError(res.error ?? "Could not create account.");
