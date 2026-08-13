@@ -13,7 +13,7 @@ import { initials } from "@/lib/format";
 export default function Conversation() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getConversation, getMessages, getOtherParticipant, getListing, sendMessage, shareContact, fetchMessages, subscribeMessages, getMyConversations, currentUser } = useApp();
+  const { getConversation, getMessages, getOtherParticipant, getListing, fetchListingById, sendMessage, shareContact, fetchMessages, subscribeMessages, getMyConversations, currentUser } = useApp();
 
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -33,6 +33,11 @@ export default function Conversation() {
     const unsub = subscribeMessages(id);
     return unsub;
   }, [id, fetchMessages, subscribeMessages]);
+
+  useEffect(() => {
+    if (!conversation?.listingId || listing) return;
+    void fetchListingById(conversation.listingId);
+  }, [conversation?.listingId, listing, fetchListingById]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });

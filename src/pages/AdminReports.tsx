@@ -88,13 +88,18 @@ function ReportRow({
   report: Report;
   onToggle: (report: Report) => void;
 }) {
-  const { getProfile, getListing } = useApp();
+  const { getProfile, getListing, fetchListingById } = useApp();
   const reporter = getProfile(report.reporterId);
   const resolved = report.status === "resolved";
   const targetListing =
     report.targetType === "listing" && report.targetId ? getListing(report.targetId) : undefined;
   const targetUser =
     report.targetType === "user" && report.targetId ? getProfile(report.targetId) : undefined;
+
+  useEffect(() => {
+    if (report.targetType !== "listing" || !report.targetId || targetListing) return;
+    void fetchListingById(report.targetId);
+  }, [report.targetId, report.targetType, targetListing, fetchListingById]);
 
   return (
     <div className={cn("rounded-2xl bg-card p-5 shadow-card transition-opacity", resolved && "opacity-60")}>

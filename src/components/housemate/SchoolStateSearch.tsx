@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { searchSchools } from "@/data/schools";
 import { lgasForState, stateNames } from "@/data/nigeria-states-lgas";
-import { schoolTypeLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { School } from "@/lib/types";
 
@@ -61,14 +60,14 @@ export function SchoolStateSearch() {
                 onKeyDown={(e) => { if (e.key === "Enter") submitSchool(); }}
               />
               {open && matches.length > 0 && (
-                <div className="absolute z-20 mt-2 max-h-72 w-full overflow-auto rounded-xl border border-border bg-popover p-1 shadow-elevated">
+                <div role="listbox" aria-label="School matches" className="absolute z-50 mt-2 max-h-72 w-full overflow-auto rounded-xl border border-border bg-popover p-1 shadow-elevated">
                   {matches.map((s) => (
-                    <button key={s.id} type="button" onMouseDown={(e) => { e.preventDefault(); setSelectedSchool(s); setSchoolQuery(s.name); setOpen(false); }} className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-accent">
+                    <button key={s.id} type="button" role="option" aria-selected={selectedSchool?.id === s.id} onMouseDown={(e) => { e.preventDefault(); setSelectedSchool(s); setSchoolQuery(s.name); setOpen(false); }} className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-accent">
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-medium">{s.name}</span>
                         <span className="block truncate text-xs text-muted-foreground">{s.state}</span>
                       </span>
-                      <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase text-secondary-foreground">{schoolTypeLabel(s.type).slice(0, 4)}</span>
+                      <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase text-secondary-foreground">{s.acronym}</span>
                     </button>
                   ))}
                 </div>

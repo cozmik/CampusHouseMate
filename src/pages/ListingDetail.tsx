@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Heart, MapPin, CalendarDays, BedDouble, Users, MessageSquare, ShieldCheck, Sparkles, Check, Clock, Flag } from "lucide-react";
+import { ArrowLeft, Heart, MapPin, CalendarDays, BedDouble, Users, MessageSquare, ShieldCheck, Sparkles, Check, Clock, Flag, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,32 @@ import type { ListingStatus } from "@/lib/types";
 export default function ListingDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getListing, getProfile, getSchool, currentUser, isSaved, toggleSave, getConversationForListing, expressInterest, updateListingStatus } = useApp();
+  const { getListing, fetchListingById, getProfile, getSchool, currentUser, isSaved, toggleSave, getConversationForListing, expressInterest, updateListingStatus } = useApp();
 
   const listing = id ? getListing(id) : undefined;
+  const [missing, setMissing] = useState(false);
+
+  useEffect(() => {
+    if (!id || listing) {
+      setMissing(false);
+      return;
+    }
+    let cancelled = false;
+    void fetchListingById(id).then((found) => {
+      if (!cancelled && !found) setMissing(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, listing, fetchListingById]);
+
+  if (!listing && !missing) {
+    return (
+      <div className="grid min-h-[40vh] place-items-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   if (!listing) {
     return (

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/types";
 
 export default function AdminUsers() {
-  const { currentUser, fetchAllUsers, setUserAdmin, setUserSuspended, listings, getSchool } = useApp();
+  const { currentUser, fetchAllUsers, setUserAdmin, setUserSuspended, getSchool } = useApp();
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,8 +34,6 @@ export default function AdminUsers() {
     setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, isSuspended: next } : u)));
     await setUserSuspended(user.id, next);
   };
-
-  const listingCount = (userId: string) => listings.filter((l) => l.ownerId === userId).length;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
@@ -98,7 +96,6 @@ export default function AdminUsers() {
                   <p className="truncate text-xs text-muted-foreground">
                     {user.email ?? "No email on file"}
                     {school && ` · ${school.name}`}
-                    {` · ${listingCount(user.id)} ${listingCount(user.id) === 1 ? "listing" : "listings"}`}
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-2">

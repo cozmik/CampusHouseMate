@@ -5,6 +5,8 @@ export interface School {
   name: string;
   state: string;
   type: SchoolType;
+  acronym: string;
+  aliases?: string[];
 }
 
 export type RoomType =
@@ -121,7 +123,16 @@ export interface ListingFilters {
   roomTypes?: RoomType[];
   gender?: GenderPreference;
   maxPrice?: number;
-  pricePeriod?: PricePeriod;
-  status?: ListingStatus;
+  pricePeriod?: PricePeriod | "any";
+  status?: ListingStatus | "any";
   savedOnly?: boolean;
+  ownerId?: string;
+  ids?: string[];
+}
+
+export interface ListingPage {
+  items: Listing[];
+  total: number;
+  page: number;
+  pageSize: number;
 }

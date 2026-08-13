@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Heart, MessageSquare, BedDouble, Search, ExternalLink } from "lucide-react";
+import { Plus, Heart, MessageSquare, BedDouble, Search, ExternalLink, Loader2 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,10 +15,46 @@ import type { Listing, ListingStatus } from "@/lib/types";
 const STATUS_OPTIONS: ListingStatus[] = ["available", "pending", "taken"];
 
 export default function Dashboard() {
-  const { currentUser, listings, getMyConversations, getSavedListings } = useApp();
+  const { currentUser, listings, fetchListings, getMyConversations, getSavedListings, savedListings } = useApp();
+  const [loadingMine, setLoadingMine] = useState(true);
+  const [loadingSaved, setLoadingSaved] = useState(true);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    let cancelled = false;
+    setLoadingMine(true);
+    void fetchListings({ ownerId: currentUser.id }, 1, 50).then(() => {
+      if (!cancelled) setLoadingMine(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser, fetchListings]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const ids = savedListings
+      .filter((s) => s.userId === currentUser.id)
+      .map((s) => s.listingId);
+    if (!ids.length) {
+      setLoadingSaved(false);
+      return;
+    }
+    let cancelled = false;
+    setLoadingSaved(true);
+    void fetchListings({ ids }, 1, 50).then(() => {
+      if (!cancelled) setLoadingSaved(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser, fetchListings, savedListings]);
+
   if (!currentUser) return null;
 
-  const myListings = listings.filter((l) => l.ownerId === currentUser.id).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const myListings = listings
+    .filter((l) => l.ownerId === currentUser.id)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const myInterests = getMyConversations().filter((c) => c.seekerId === currentUser.id);
   const saved = getSavedListings();
 
@@ -42,7 +79,9 @@ export default function Dashboard() {
         </TabsList>
 
         <TabsContent value="listings" className="mt-6">
-          {myListings.length === 0 ? (
+          {loadingMine && myListings.length === 0 ? (
+            <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+          ) : myListings.length === 0 ? (
             <EmptyState icon={Plus} title="No listings yet" body="Post your first space and let incoming students find you." cta={{ label: "Post a space", to: "/post" }} />
           ) : (
             <div className="space-y-4">{myListings.map((l) => (<ListingRow key={l.id} listing={l} />))}</div>
@@ -60,7 +99,9 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="saved" className="mt-6">
-          {saved.length === 0 ? (
+          {loadingSaved && saved.length === 0 ? (
+            <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+          ) : saved.length === 0 ? (
             <EmptyState icon={Heart} title="No saved listings" body="Tap the heart on any space to bookmark it for later." cta={{ label: "Browse spaces", to: "/browse" }} />
           ) : (
             <div className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">{saved.map((l) => (<ListingCard key={l.id} listing={l} showStatus />))}</div>

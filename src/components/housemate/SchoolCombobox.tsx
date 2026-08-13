@@ -41,14 +41,17 @@ export function SchoolCombobox({
         onBlur={() => setTimeout(() => setOpen(false), 150)}
       />
       {open && matches.length > 0 && (
-        <div className="absolute z-20 mt-2 max-h-72 w-full overflow-auto rounded-xl border border-border bg-popover p-1 shadow-elevated">
+        <div role="listbox" aria-label="School matches" className="absolute z-20 mt-2 max-h-72 w-full overflow-auto rounded-xl border border-border bg-popover p-1 shadow-elevated">
           {matches.map((s) => (
-            <button key={s.id} type="button" onMouseDown={(e) => { e.preventDefault(); onChange(s.id); setQuery(""); setOpen(false); }} className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-accent">
+            <button key={s.id} type="button" role="option" aria-selected={s.id === value} onMouseDown={(e) => { e.preventDefault(); onChange(s.id); setQuery(""); setOpen(false); }} className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-accent">
               <span className="min-w-0">
                 <span className="block truncate text-sm font-medium">{s.name}</span>
                 <span className="block truncate text-xs text-muted-foreground">{s.state} · {schoolTypeLabel(s.type)}</span>
               </span>
-              {s.id === value && <Check className="h-4 w-4 shrink-0 text-primary" />}
+              <span className="flex shrink-0 items-center gap-2">
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase text-secondary-foreground">{s.acronym}</span>
+                {s.id === value && <Check className="h-4 w-4 shrink-0 text-primary" />}
+              </span>
             </button>
           ))}
         </div>

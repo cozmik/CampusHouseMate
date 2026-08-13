@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -15,6 +16,7 @@ import type {
   Conversation,
   Listing,
   ListingFilters,
+  ListingPage,
   ListingStatus,
   Message,
   Profile,
@@ -211,7 +213,11 @@ interface AppContextValue {
   uploadAvatar: (file: File) => Promise<string>;
 
   listings: Listing[];
+  listingsLoading: boolean;
   getListing: (id: string) => Listing | undefined;
+  fetchListingById: (id: string) => Promise<Listing | undefined>;
+  fetchListings: (filters: ListingFilters, page?: number, pageSize?: number) => Promise<ListingPage>;
+  fetchSchoolCounts: () => Promise<Record<string, number>>;
   createListing: (input: CreateListingInput) => Promise<Listing>;
   updateListingStatus: (id: string, status: ListingStatus) => Promise<void>;
   filterListings: (filters: ListingFilters) => Listing[];
@@ -250,18 +256,27 @@ interface AppContextValue {
   setUserSuspended: (id: string, isSuspended: boolean) => Promise<void>;
 }
 
+export const LISTING_PAGE_SIZE = 12;
+
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [authReady, setAuthReady] = useState(false);
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
+  const [listingsLoading, setListingsLoading] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messagesByConv, setMessagesByConv] = useState<Record<string, Message[]>>(
     {},
   );
   const [savedListings, setSavedListings] = useState<SavedListing[]>([]);
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
+  const listingsRef = useRef<Listing[]>([]);
+  listingsRef.current = listings;
+  const savedListingsRef = useRef<SavedListing[]>([]);
+  savedListingsRef.current = savedListings;
+  const currentUserRef = useRef<Profile | null>(null);
+  currentUserRef.current = currentUser;
 
   const cacheProfiles = useCallback((rows: RawProfile[]) => {
     setProfilesCache((prev) => {
@@ -270,6 +285,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return next;
     });
   }, []);
+
+  const mergeListings = useCallback((incoming: Listing[]) => {
+    if (!incoming.length) return;
+    setListings((prev) => {
+      const byId = new Map(prev.map((l) => [l.id, l]));
+      for (const listing of incoming) byId.set(listing.id, listing);
+      return [...byId.values()];
+    });
+  }, []);
+
+  const cacheOwners = useCallback(
+    async (mapped: Listing[]) => {
+      const ownerIds = [...new Set(mapped.map((l) => l.ownerId))];
+      if (!ownerIds.length) return;
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", ownerIds);
+      if (profs) cacheProfiles(profs as unknown as RawProfile[]);
+    },
+    [cacheProfiles],
+  );
 
   const loadUserSession = useCallback(
     async (session: {
@@ -392,8 +429,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
         setMessagesByConv((prev) => ({ ...prev, ...byConv }));
       }
+
+      const listingIds = [...new Set(convs.map((c) => c.listingId))];
+      if (listingIds.length) {
+        const { data: listingRows } = await supabase
+          .from("listings")
+          .select("*, listing_photos(*)")
+          .in("id", listingIds);
+        if (listingRows?.length) {
+          const mapped = (listingRows as unknown as RawListing[]).map(mapListing);
+          mergeListings(mapped);
+          void cacheOwners(mapped);
+        }
+      }
     },
-    [cacheProfiles],
+    [cacheOwners, cacheProfiles, mergeListings],
   );
 
   // Auth state
@@ -471,28 +521,114 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
-  // Load listings (public)
-  const loadListings = useCallback(async () => {
+  const fetchListings = useCallback(
+    async (filters: ListingFilters, page = 1, pageSize = LISTING_PAGE_SIZE): Promise<ListingPage> => {
+      const empty: ListingPage = { items: [], total: 0, page, pageSize };
+      let savedIds: string[] | undefined;
+      if (filters.savedOnly) {
+        savedIds = savedListingsRef.current
+          .filter((s) => !currentUserRef.current || s.userId === currentUserRef.current.id)
+          .map((s) => s.listingId);
+        if (!savedIds.length) return empty;
+      }
+      const ids = filters.ids?.length ? filters.ids : savedIds;
+
+      setListingsLoading(true);
+      try {
+        let query = supabase
+          .from("listings")
+          .select("*, listing_photos(*)", { count: "exact" });
+
+        if (filters.schoolId) query = query.eq("school_id", filters.schoolId);
+        if (filters.state) query = query.eq("state", filters.state);
+        if (filters.lga) query = query.eq("lga", filters.lga);
+        if (filters.roomTypes?.length) query = query.in("room_type", filters.roomTypes);
+        if (filters.gender && filters.gender !== "any") {
+          query = query.in("gender_preference", [filters.gender, "any"]);
+        }
+        if (filters.maxPrice) query = query.lte("price", filters.maxPrice);
+        if (filters.pricePeriod && filters.pricePeriod !== "any") {
+          query = query.eq("price_period", filters.pricePeriod);
+        }
+        if (filters.status && filters.status !== "any") query = query.eq("status", filters.status);
+        if (filters.ownerId) query = query.eq("owner_id", filters.ownerId);
+        if (ids?.length) query = query.in("id", ids);
+
+        const q = filters.q?.trim();
+        if (q) {
+          const safe = q.replace(/[%_,()]/g, " ").trim();
+          if (safe) {
+            const needle = safe.toLowerCase();
+            const schoolIds = schoolsData
+              .filter(
+                (s) =>
+                  s.name.toLowerCase().includes(needle) ||
+                  s.acronym.toLowerCase().includes(needle) ||
+                  (s.aliases ?? []).some((a) => a.toLowerCase().includes(needle)) ||
+                  s.state.toLowerCase().includes(needle),
+              )
+              .map((s) => s.id)
+              .slice(0, 20);
+            const parts = [
+              `title.ilike.%${safe}%`,
+              `description.ilike.%${safe}%`,
+              `area.ilike.%${safe}%`,
+              `lga.ilike.%${safe}%`,
+            ];
+            if (schoolIds.length) parts.push(`school_id.in.(${schoolIds.join(",")})`);
+            query = query.or(parts.join(","));
+          }
+        }
+
+        const from = (page - 1) * pageSize;
+        const { data, count, error } = await query
+          .order("created_at", { ascending: false })
+          .range(from, from + pageSize - 1);
+
+        if (error || !data) return empty;
+        const mapped = (data as unknown as RawListing[]).map(mapListing);
+        mergeListings(mapped);
+        void cacheOwners(mapped);
+        return { items: mapped, total: count ?? mapped.length, page, pageSize };
+      } finally {
+        setListingsLoading(false);
+      }
+    },
+    [cacheOwners, mergeListings],
+  );
+
+  const fetchListingById = useCallback(
+    async (id: string) => {
+      const existing = listingsRef.current.find((l) => l.id === id);
+      if (existing) return existing;
+      const { data } = await supabase
+        .from("listings")
+        .select("*, listing_photos(*)")
+        .eq("id", id)
+        .maybeSingle();
+      if (!data) return undefined;
+      const mapped = mapListing(data as unknown as RawListing);
+      mergeListings([mapped]);
+      void cacheOwners([mapped]);
+      return mapped;
+    },
+    [cacheOwners, mergeListings],
+  );
+
+  const fetchSchoolCounts = useCallback(async () => {
     const { data } = await supabase
       .from("listings")
-      .select("*, listing_photos(*)")
-      .order("created_at", { ascending: false });
-    if (!data) return;
-    const mapped = (data as unknown as RawListing[]).map(mapListing);
-    setListings(mapped);
-    const ownerIds = [...new Set(mapped.map((l) => l.ownerId))];
-    if (ownerIds.length) {
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("*")
-        .in("id", ownerIds);
-      if (profs) cacheProfiles(profs as unknown as RawProfile[]);
+      .select("school_id")
+      .eq("status", "available")
+      .order("created_at", { ascending: false })
+      .limit(1000);
+    const counts: Record<string, number> = {};
+    for (const row of data ?? []) {
+      const id = (row as { school_id: string }).school_id;
+      counts[id] = (counts[id] ?? 0) + 1;
     }
-  }, [cacheProfiles]);
-
-  useEffect(() => {
-    void loadListings();
-  }, [loadListings]);
+    return counts;
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -734,7 +870,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const school = getSchoolData(l.schoolId);
           const hay = `${l.title} ${l.description} ${l.area ?? ""} ${l.lga} ${
             school?.name ?? ""
-          }`.toLowerCase();
+          } ${school?.acronym ?? ""} ${(school?.aliases ?? []).join(" ")}`.toLowerCase();
           if (!hay.includes(q)) return false;
         }
         if (filters.savedOnly) {
@@ -762,7 +898,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const expressInterest = useCallback(
     async (listingId: string): Promise<string | undefined> => {
       if (!currentUser) return undefined;
-      const listing = listings.find((l) => l.id === listingId);
+      const listing =
+        listingsRef.current.find((l) => l.id === listingId) ??
+        (await fetchListingById(listingId));
       if (!listing) return undefined;
       const existed = conversations.find(
         (c) =>
@@ -809,7 +947,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       return conv.id;
     },
-    [currentUser, listings, conversations],
+    [conversations, currentUser, fetchListingById],
   );
 
   const getMyConversations = useCallback(() => conversations, [conversations]);
@@ -1130,7 +1268,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateProfile,
       uploadAvatar,
       listings,
+      listingsLoading,
       getListing,
+      fetchListingById,
+      fetchListings,
+      fetchSchoolCounts,
       createListing,
       updateListingStatus,
       filterListings,
@@ -1171,7 +1313,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateProfile,
       uploadAvatar,
       listings,
+      listingsLoading,
       getListing,
+      fetchListingById,
+      fetchListings,
+      fetchSchoolCounts,
       createListing,
       updateListingStatus,
       filterListings,

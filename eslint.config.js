@@ -10,7 +10,7 @@ export default tseslint.config(
   // noise (e.g. no-explicit-any in newly added shadcn components) and feeds
   // an AI "fix" loop against code that shouldn't change — every retry
   // billed. Ignore it wholesale; the user's own code stays fully linted.
-  { ignores: ["dist", "src/components/ui/**"] },
+  { ignores: ["dist", "src/components/ui/**", "e2e/**", "playwright.config.ts", "playwright-report/**", "test-results/**"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
