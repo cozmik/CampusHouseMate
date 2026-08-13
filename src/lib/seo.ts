@@ -7,10 +7,10 @@ export function siteOrigin() {
   return "https://housemates.ng";
 }
 
-export const DEFAULT_TITLE = "Housemates Finder — Find and hand over student hostels in Nigeria";
+export const DEFAULT_TITLE = "Housemates Finder — Find student hostels in Nigeria";
 
 export const DEFAULT_DESCRIPTION =
-  "Housemates Finder connects outgoing students handing over their lodge with incoming students looking for a space near Nigerian campuses. Search by school or area, chat privately, and move in — free, with no in-app payments.";
+  "Find or hand over a student hostel near Nigerian campuses. Search by school or area, chat privately — free, no in-app payments.";
 
 export const DEFAULT_IMAGE =
   "https://cdn.enter.pro/resources/uid_100410371/65a6740a-a333-4a.png";
