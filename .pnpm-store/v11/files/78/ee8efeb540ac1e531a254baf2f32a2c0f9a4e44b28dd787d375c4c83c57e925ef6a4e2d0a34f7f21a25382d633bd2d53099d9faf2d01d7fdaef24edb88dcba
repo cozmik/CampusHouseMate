@@ -1,0 +1,496 @@
+import react from '@vitejs/plugin-react';
+
+// src/index.ts
+
+// src/sourceInfoInjectPlugin.ts
+var threeFiberElems = /* @__PURE__ */ new Set([
+  "object3D",
+  "audioListener",
+  "positionalAudio",
+  "mesh",
+  "batchedMesh",
+  "instancedMesh",
+  "scene",
+  "sprite",
+  "lOD",
+  "skinnedMesh",
+  "skeleton",
+  "bone",
+  "lineSegments",
+  "lineLoop",
+  "points",
+  "group",
+  "camera",
+  "perspectiveCamera",
+  "orthographicCamera",
+  "cubeCamera",
+  "arrayCamera",
+  "instancedBufferGeometry",
+  "bufferGeometry",
+  "boxBufferGeometry",
+  "circleBufferGeometry",
+  "coneBufferGeometry",
+  "cylinderBufferGeometry",
+  "dodecahedronBufferGeometry",
+  "extrudeBufferGeometry",
+  "icosahedronBufferGeometry",
+  "latheBufferGeometry",
+  "octahedronBufferGeometry",
+  "planeBufferGeometry",
+  "polyhedronBufferGeometry",
+  "ringBufferGeometry",
+  "shapeBufferGeometry",
+  "sphereBufferGeometry",
+  "tetrahedronBufferGeometry",
+  "torusBufferGeometry",
+  "torusKnotBufferGeometry",
+  "tubeBufferGeometry",
+  "wireframeGeometry",
+  "tetrahedronGeometry",
+  "octahedronGeometry",
+  "icosahedronGeometry",
+  "dodecahedronGeometry",
+  "polyhedronGeometry",
+  "tubeGeometry",
+  "torusKnotGeometry",
+  "torusGeometry",
+  "sphereGeometry",
+  "ringGeometry",
+  "planeGeometry",
+  "latheGeometry",
+  "shapeGeometry",
+  "extrudeGeometry",
+  "edgesGeometry",
+  "coneGeometry",
+  "cylinderGeometry",
+  "circleGeometry",
+  "boxGeometry",
+  "capsuleGeometry",
+  "material",
+  "shadowMaterial",
+  "spriteMaterial",
+  "rawShaderMaterial",
+  "shaderMaterial",
+  "pointsMaterial",
+  "meshPhysicalMaterial",
+  "meshStandardMaterial",
+  "meshPhongMaterial",
+  "meshToonMaterial",
+  "meshNormalMaterial",
+  "meshLambertMaterial",
+  "meshDepthMaterial",
+  "meshDistanceMaterial",
+  "meshBasicMaterial",
+  "meshMatcapMaterial",
+  "lineDashedMaterial",
+  "lineBasicMaterial",
+  "primitive",
+  "light",
+  "spotLightShadow",
+  "spotLight",
+  "pointLight",
+  "rectAreaLight",
+  "hemisphereLight",
+  "directionalLightShadow",
+  "directionalLight",
+  "ambientLight",
+  "lightShadow",
+  "ambientLightProbe",
+  "hemisphereLightProbe",
+  "lightProbe",
+  "spotLightHelper",
+  "skeletonHelper",
+  "pointLightHelper",
+  "hemisphereLightHelper",
+  "gridHelper",
+  "polarGridHelper",
+  "directionalLightHelper",
+  "cameraHelper",
+  "boxHelper",
+  "box3Helper",
+  "planeHelper",
+  "arrowHelper",
+  "axesHelper",
+  "texture",
+  "videoTexture",
+  "dataTexture",
+  "dataTexture3D",
+  "compressedTexture",
+  "cubeTexture",
+  "canvasTexture",
+  "depthTexture",
+  "raycaster",
+  "vector2",
+  "vector3",
+  "vector4",
+  "euler",
+  "matrix3",
+  "matrix4",
+  "quaternion",
+  "bufferAttribute",
+  "float16BufferAttribute",
+  "float32BufferAttribute",
+  "float64BufferAttribute",
+  "int8BufferAttribute",
+  "int16BufferAttribute",
+  "int32BufferAttribute",
+  "uint8BufferAttribute",
+  "uint16BufferAttribute",
+  "uint32BufferAttribute",
+  "instancedBufferAttribute",
+  "color",
+  "fog",
+  "fogExp2",
+  "shape",
+  "colorShiftMaterial"
+]);
+function shouldTagElement(elementName, threeDreiImportedElements, threeDreiNamespaces) {
+  if (threeFiberElems.has(elementName)) {
+    return false;
+  }
+  if (threeDreiImportedElements.has(elementName)) {
+    return false;
+  }
+  if (elementName.includes(".")) {
+    const namespace = elementName.split(".")[0] || "";
+    if (threeDreiNamespaces.has(namespace)) {
+      return false;
+    }
+  }
+  return true;
+}
+function injectSourcePlugin({ types: t }) {
+  return {
+    name: "inject-source-location-enhanced",
+    visitor: {
+      Program: {
+        enter(path, state) {
+          state.threeImportedElements = /* @__PURE__ */ new Set();
+          state.threeNamespaces = /* @__PURE__ */ new Set();
+        }
+      },
+      ImportDeclaration(path, state) {
+        const threeLibraries = [
+          "@react-three/fiber",
+          "@react-three/drei",
+          "@react-three/postprocessing",
+          "three"
+        ];
+        if (threeLibraries.includes(path.node.source.value)) {
+          path.node.specifiers.forEach((spec) => {
+            if (spec.type === "ImportSpecifier") {
+              state.threeImportedElements.add(spec.local.name);
+            } else if (spec.type === "ImportNamespaceSpecifier") {
+              state.threeNamespaces.add(spec.local.name);
+            }
+          });
+        }
+      },
+      JSXElement(path, state) {
+        const { node } = path;
+        const filename = state.filename || state.file.opts.filename || "unknown";
+        const start = node.loc?.start;
+        const end = node.loc?.end;
+        if (!start) return;
+        const relativePath = filename.replace(/^.*\/src\//, "src/").replace(/\\/g, "/");
+        const sourceLocation = `${relativePath}:${start.line}:${start.column + 1}`;
+        const elementType = getElementType(node.openingElement.name);
+        if (!shouldTagElement(elementType, state.threeImportedElements || /* @__PURE__ */ new Set(), state.threeNamespaces || /* @__PURE__ */ new Set())) {
+          return;
+        }
+        const elementInfo = {
+          fileName: relativePath,
+          lineNumber: start.line,
+          columnNumber: start.column + 1,
+          endLine: end?.line || start.line,
+          endColumn: end?.column ? end.column + 1 : start.column + 1,
+          elementType,
+          tagName: elementType.toLowerCase(),
+          // 获取元素的属性信息
+          attributes: node.openingElement.attributes.map((attr) => {
+            if (attr.type === "JSXAttribute" && attr.name) {
+              return {
+                name: attr.name.name,
+                hasValue: !!attr.value,
+                line: attr.loc?.start?.line,
+                column: attr.loc?.start?.column
+              };
+            }
+            return null;
+          }).filter(Boolean),
+          // 记录是否有子元素
+          hasChildren: node.children && node.children.length > 0,
+          // 记录父元素信息（如果可获得）
+          parentElement: getParentElementType(path.parent)
+        };
+        const sourceLocationAttr = t.jsxAttribute(
+          t.jsxIdentifier("data-source-location"),
+          t.stringLiteral(sourceLocation)
+        );
+        const sourceStackAttr = t.jsxAttribute(
+          t.jsxIdentifier("data-source-stack"),
+          t.stringLiteral(JSON.stringify(elementInfo))
+        );
+        const elementTypeAttr = t.jsxAttribute(
+          t.jsxIdentifier("data-element-type"),
+          t.stringLiteral(elementType)
+        );
+        const lineNumberAttr = t.jsxAttribute(
+          t.jsxIdentifier("data-line-number"),
+          t.stringLiteral(start.line.toString())
+        );
+        const runtimeFileAttr = t.jsxAttribute(
+          t.jsxIdentifier("data-real-file"),
+          t.stringLiteral(relativePath)
+        );
+        const runtimeLineAttr = t.jsxAttribute(
+          t.jsxIdentifier("data-real-line"),
+          t.stringLiteral(start.line.toString())
+        );
+        const runtimeColumnAttr = t.jsxAttribute(
+          t.jsxIdentifier("data-real-column"),
+          t.stringLiteral((start.column + 1).toString())
+        );
+        const injectionMethodAttr = t.jsxAttribute(
+          t.jsxIdentifier("data-injected-source"),
+          t.stringLiteral("babel")
+        );
+        node.openingElement.attributes.push(
+          sourceLocationAttr,
+          sourceStackAttr,
+          elementTypeAttr,
+          lineNumberAttr,
+          runtimeFileAttr,
+          runtimeLineAttr,
+          runtimeColumnAttr,
+          injectionMethodAttr
+        );
+      }
+    }
+  };
+}
+function getElementType(nameNode) {
+  if (nameNode.type === "JSXIdentifier") {
+    return nameNode.name;
+  } else if (nameNode.type === "JSXMemberExpression") {
+    return `${nameNode.object.name}.${nameNode.property.name}`;
+  }
+  return "unknown";
+}
+function getParentElementType(parentNode) {
+  if (parentNode && parentNode.type === "JSXElement" && parentNode.openingElement) {
+    return getElementType(parentNode.openingElement.name);
+  }
+  return null;
+}
+
+// src/index.ts
+function enterDevPlugin(options = {}) {
+  const {
+    injectMessageListener = true
+  } = options;
+  const reactPlugin = react({
+    // 确保在开发模式下启用JSX源码映射
+    jsxImportSource: void 0,
+    jsxRuntime: "automatic",
+    // 启用构建时注入源码位置信息
+    babel: {
+      plugins: [
+        // 我们的自定义插件：在构建时注入源码位置
+        [injectSourcePlugin],
+        // 标准的React JSX转换
+        [
+          "@babel/plugin-transform-react-jsx",
+          {
+            runtime: "automatic",
+            importSource: "react",
+            development: true
+            // 保持开发模式以获得更好的调试体验
+          }
+        ]
+      ]
+    }
+  });
+  const htmlInjectPlugin = {
+    name: "enter-dev-message-listener",
+    enforce: "pre",
+    transformIndexHtml(html) {
+      if (!injectMessageListener) {
+        return html;
+      }
+      const messageListenerScript = `
+  <script>
+    (function() {
+      window.__earlyErrors__ = [];
+      window.__earlyConsoleLogs__ = [];
+      
+      const earlyErrorHandler = function(event) {
+        window.__earlyErrors__.push({
+          type: 'error',
+          message: event.message,
+          filename: event.filename,
+          lineno: event.lineno,
+          colno: event.colno,
+          error: event.error ? {
+            name: event.error.name,
+            message: event.error.message,
+            stack: event.error.stack
+          } : null,
+          timestamp: Date.now()
+        });
+      };
+      window.addEventListener('error', earlyErrorHandler, true);
+      
+      const earlyRejectionHandler = function(event) {
+        const reason = event.reason;
+        window.__earlyErrors__.push({
+          type: 'unhandledrejection',
+          reason: reason instanceof Error ? {
+            name: reason.name,
+            message: reason.message,
+            stack: reason.stack
+          } : String(reason),
+          timestamp: Date.now()
+        });
+      };
+      window.addEventListener('unhandledrejection', earlyRejectionHandler, true);
+      
+      const originalConsoleError = console.error;
+      const originalConsoleWarn = console.warn;
+      
+      console.error = function(...args) {
+        originalConsoleError.apply(console, args);
+        
+        window.__earlyConsoleLogs__.push({
+          type: 'error',
+          args: args.map(arg => {
+            if (arg instanceof Error) {
+              return {
+                name: arg.name,
+                message: arg.message,
+                stack: arg.stack
+              };
+            }
+            try {
+              return String(arg);
+            } catch {
+              return '[Unstringifiable]';
+            }
+          }),
+          timestamp: Date.now()
+        });
+      };
+      
+      console.warn = function(...args) {
+        originalConsoleWarn.apply(console, args);
+        
+        window.__earlyConsoleLogs__.push({
+          type: 'warn',
+          args: args.map(arg => {
+            try {
+              return String(arg);
+            } catch {
+              return '[Unstringifiable]';
+            }
+          }),
+          timestamp: Date.now()
+        });
+      };
+      
+      window.__cleanupEarlyErrorHandlers__ = function() {
+        window.removeEventListener('error', earlyErrorHandler, true);
+        window.removeEventListener('unhandledrejection', earlyRejectionHandler, true);
+        
+        console.error = originalConsoleError;
+        console.warn = originalConsoleWarn;
+        
+        delete window.__cleanupEarlyErrorHandlers__;
+      };
+    })();
+    
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'inject-script') {
+        try {
+          console.log('Executing injector script in sandbox...');
+
+          const script = document.createElement('script');
+          script.textContent = event.data.script;
+          document.head.appendChild(script);
+          console.log('Injector script executed successfully');
+        } catch (error) {
+          console.error('Failed to execute injector script:', error);
+        }
+      }
+    });
+
+  </script>`;
+      if (html.includes("</head>")) {
+        return html.replace("</head>", `${messageListenerScript}
+</head>`);
+      } else if (html.includes("</title>")) {
+        return html.replace("</title>", `</title>${messageListenerScript}`);
+      }
+      return html;
+    }
+  };
+  const sandboxServerPlugin = {
+    name: "enter-dev-sandbox-server",
+    config(_, { command }) {
+      if (command !== "serve") return;
+      const isSandbox = process.cwd().startsWith("/workspace");
+      if (!isSandbox) return;
+      const port = process.env.ENTER_DEV_PORT ? parseInt(process.env.ENTER_DEV_PORT, 10) : void 0;
+      const basePath = process.env.ENTER_BASE_PATH || void 0;
+      return {
+        ...basePath && { base: basePath },
+        server: {
+          ...port && { port },
+          allowedHosts: true,
+          watch: { usePolling: true, interval: 500 }
+        }
+      };
+    }
+  };
+  const routerBasePlugin = {
+    name: "enter-dev-router-base",
+    enforce: "pre",
+    transform(code, id) {
+      if (!process.env.ENTER_BASE_PATH) return;
+      if (!id.match(/\.[jt]sx?$/)) return;
+      if (!code.includes("createBrowserRouter")) return;
+      if (code.includes("basename")) return;
+      return code.replace(
+        /createBrowserRouter\(([^,)]+)\)/g,
+        "createBrowserRouter($1, { basename: import.meta.env.BASE_URL })"
+      );
+    }
+  };
+  return [...reactPlugin, htmlInjectPlugin, sandboxServerPlugin, routerBasePlugin];
+}
+function enterProdPlugin(options = {}) {
+  const {
+    injectGoogleFonts = true,
+    googleFontsUrl = "https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900;950&family=Poppins:wght@100;200;300;400;500;600;700;800;900;950&family=Roboto:wght@100;200;300;400;500;600;700;800;900;950&display=swap"
+  } = options;
+  const fontsInjectPlugin = {
+    name: "enter-prod-fonts-inject",
+    enforce: "pre",
+    transformIndexHtml(html) {
+      if (!injectGoogleFonts) {
+        return html;
+      }
+      const googleFontsLink = `<link href="${googleFontsUrl}" rel="stylesheet">`;
+      if (html.includes(googleFontsUrl)) {
+        return html;
+      }
+      if (html.includes("</head>")) {
+        return html.replace("</head>", `  ${googleFontsLink}
+</head>`);
+      }
+      return html;
+    }
+  };
+  return [fontsInjectPlugin];
+}
+
+export { enterDevPlugin, enterProdPlugin };
