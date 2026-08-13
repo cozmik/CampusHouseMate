@@ -506,7 +506,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     if (error) return { ok: false, error: error.message };
     toast.success("Reset link sent", {
-      description: "If that email is on HouseMate, check your inbox (and spam) for a link.",
+      description: "If that email is on Housemates Finder, check your inbox (and spam) for a link.",
     });
     return { ok: true };
   }, []);

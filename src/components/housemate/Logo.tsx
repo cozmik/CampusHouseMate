@@ -20,11 +20,11 @@ export function Logo({
   return (
     <Link to="/" className={cn("flex items-center", className)}>
       {compact ? (
-        <img src={LOGO_SRC.icon} alt="HouseMate" className="h-9 w-9 rounded-full" />
+        <img src={LOGO_SRC.icon} alt="Housemates Finder" className="h-9 w-9 rounded-full" />
       ) : (
         <img
           src={variant === "light" ? LOGO_SRC.light : LOGO_SRC.dark}
-          alt="HouseMate"
+          alt="Housemates Finder"
           className="h-8 w-auto sm:h-9"
         />
       )}

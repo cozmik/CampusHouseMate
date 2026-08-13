@@ -3,10 +3,11 @@ import { test, expect } from "./fixtures/test";
 test.describe("Home", () => {
   test("renders the hero, search, and trending sections", async ({ page }) => {
     await page.goto("/");
+    await expect(page).toHaveTitle(/Housemates Finder/);
     await expect(page.getByRole("heading", { name: /find your next hostel/i })).toBeVisible();
     await expect(page.getByPlaceholder(/search your school/i)).toBeVisible();
     await expect(page.getByRole("heading", { name: "Trending schools" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "How HouseMate works" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "How Housemates Finder works" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Fresh on the block" })).toBeVisible();
   });
 

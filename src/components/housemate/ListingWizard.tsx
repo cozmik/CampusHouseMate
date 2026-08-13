@@ -297,7 +297,7 @@ export function ListingWizard() {
             </div>
             <div className="flex items-start gap-2 rounded-xl bg-secondary/50 p-3 text-xs text-muted-foreground">
               <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <p>Payments happen off-app, in person. HouseMate only connects you with interested seekers — never send money to anyone you haven't met.</p>
+              <p>Payments happen off-app, in person. Housemates Finder only connects you with interested seekers — never send money to anyone you haven't met.</p>
             </div>
           </div>
         )}

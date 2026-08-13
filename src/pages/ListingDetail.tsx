@@ -80,7 +80,7 @@ export default function ListingDetail() {
       <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-5 text-muted-foreground"><ArrowLeft className="h-4 w-4" />Back</Button>
       <div className="grid gap-8 lg:grid-cols-5 lg:gap-10">
         <div className="space-y-7 lg:col-span-3">
-          <PhotoGallery photos={listing.photos} />
+          <PhotoGallery photos={listing.photos} alt={listing.title} />
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <StatusBadge status={listing.status} />
@@ -120,7 +120,7 @@ export default function ListingDetail() {
           )}
           <div className="flex items-start gap-2.5 rounded-2xl bg-warning/5 p-4 text-sm sm:p-5">
             <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
-            <p className="text-muted-foreground"><span className="font-semibold text-foreground">Stay safe.</span> Meet on or around campus before paying. HouseMate never handles money — share contact details only inside the chat when you're comfortable.</p>
+            <p className="text-muted-foreground"><span className="font-semibold text-foreground">Stay safe.</span> Meet on or around campus before paying. Housemates Finder never handles money — share contact details only inside the chat when you're comfortable.</p>
           </div>
         </div>
         <div className="lg:col-span-2">

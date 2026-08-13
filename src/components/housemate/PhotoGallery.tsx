@@ -3,7 +3,15 @@ import { ChevronLeft, ChevronRight, BedDouble, Expand } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ListingPhoto } from "@/lib/types";
 
-export function PhotoGallery({ photos, className }: { photos: ListingPhoto[]; className?: string }) {
+export function PhotoGallery({
+  photos,
+  alt,
+  className,
+}: {
+  photos: ListingPhoto[];
+  alt?: string;
+  className?: string;
+}) {
   const [active, setActive] = useState(0);
   const sorted = [...photos].sort((a, b) => a.position - b.position);
   const count = sorted.length;
@@ -14,7 +22,11 @@ export function PhotoGallery({ photos, className }: { photos: ListingPhoto[]; cl
     <div className={cn("space-y-3", className)}>
       <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-muted">
         {current ? (
-          <img src={current.url} alt={`Photo ${active + 1}`} className="h-full w-full object-cover" />
+          <img
+            src={current.url}
+            alt={alt ? `${alt} — photo ${active + 1}` : `Listing photo ${active + 1}`}
+            className="h-full w-full object-cover"
+          />
         ) : (
           <div className="grid h-full w-full place-items-center text-muted-foreground">
             <BedDouble className="h-12 w-12" />

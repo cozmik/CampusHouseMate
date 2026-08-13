@@ -9,6 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_ENTER_ANALYTICS_ENDPOINT?: string;
   readonly VITE_ENTER_ANALYTICS_DEFINITIONS_ENDPOINT?: string;
   readonly VITE_ENTER_ANALYTICS_DEBUG?: string;
+  readonly VITE_SITE_URL?: string;
 }
 
 interface ImportMeta {

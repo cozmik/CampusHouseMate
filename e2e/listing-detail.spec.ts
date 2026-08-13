@@ -17,6 +17,7 @@ test.describe("Listing detail", () => {
   test("loads a listing by URL even if it was never browsed", async ({ page }) => {
     await page.goto("/listings/listing-deep");
     await expect(page.getByRole("heading", { name: "Ensuite room in Akoka" })).toBeVisible();
+    await expect(page).toHaveTitle(/Ensuite room in Akoka/);
     await expect(page.getByText("Fetched by id, not from the browse cache.")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Listing not found" })).toHaveCount(0);
   });

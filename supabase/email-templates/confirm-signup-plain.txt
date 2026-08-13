@@ -1,6 +1,6 @@
-HouseMate — Confirm your email (optional)
+Housemates Finder — Confirm your email (optional)
 
-Hey {{ .Data.first_name }} — welcome to HouseMate, the student way to find and hand over hostel spaces near campus.
+Hey {{ .Data.first_name }} — welcome to Housemates Finder, the student way to find and hand over hostel spaces near campus.
 
 When you have a moment, confirm your email address ({{ .Email }}) by opening this link:
 
@@ -8,7 +8,7 @@ When you have a moment, confirm your email address ({{ .Email }}) by opening thi
 
 Confirming is optional — you can browse, post, and chat either way. It just helps build trust and makes account recovery easier.
 
-Stay safe: HouseMate never handles payments. Meet on or around campus before paying, and share contact details only when you're comfortable inside chat.
+Stay safe: Housemates Finder never handles payments. Meet on or around campus before paying, and share contact details only when you're comfortable inside chat.
 
 Didn't create an account? You can ignore this email.
 

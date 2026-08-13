@@ -65,7 +65,7 @@ export default function Login() {
         <div className="mb-6 flex justify-center"><Logo /></div>
         <div className="rounded-3xl glass-strong p-7 sm:p-10">
           <h1 className="text-2xl font-bold">Welcome back</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Log in to continue to HouseMate.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Log in to continue to Housemates Finder.</p>
           <form onSubmit={onSubmit} className="mt-7 space-y-5">
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>

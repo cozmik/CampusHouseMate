@@ -64,7 +64,7 @@ export default function Index() {
               Find your next hostel, <span className="text-gradient">the student way</span>
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-pretty text-base text-muted-foreground sm:text-lg">
-              HouseMate connects outgoing students with new ones taking over their space. Pick your school, chat with the current occupant, and move in with confidence.
+              Housemates Finder connects outgoing students with new ones taking over their space. Pick your school, chat with the current occupant, and move in with confidence.
             </p>
           </div>
           <div className="mx-auto mt-10 max-w-2xl sm:mt-12"><SchoolStateSearch /></div>
@@ -97,7 +97,7 @@ export default function Index() {
 
       <section className="bg-secondary/30 py-14 sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-center text-2xl font-bold sm:text-3xl">How HouseMate works</h2>
+          <h2 className="text-center text-2xl font-bold sm:text-3xl">How Housemates Finder works</h2>
           <p className="mt-2 text-center text-sm text-muted-foreground">Three simple steps from search to keys.</p>
           <div className="mt-10 grid gap-5 sm:mt-12 md:grid-cols-3 md:gap-6">
             {steps.map((s, i) => (

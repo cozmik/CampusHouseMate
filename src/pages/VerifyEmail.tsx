@@ -56,7 +56,7 @@ export default function VerifyEmail() {
             <p className="mt-1 text-sm text-muted-foreground">
               {emailVerified
                 ? "Thanks — you're all set. Keep browsing, posting, and chatting as usual."
-                : "Optional, but recommended. It helps other students trust your profile and makes account recovery easier. You can keep using HouseMate without it."}
+                : "Optional, but recommended. It helps other students trust your profile and makes account recovery easier. You can keep using Housemates Finder without it."}
             </p>
           </div>
         </div>

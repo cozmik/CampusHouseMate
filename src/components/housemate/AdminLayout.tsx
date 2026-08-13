@@ -22,7 +22,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">
               <ShieldCheck className="h-4 w-4" />
             </span>
-            HouseMate Admin
+            Housemates Finder Admin
           </div>
           <nav className="ml-4 flex items-center gap-1">
             {navItems.map((item) => (
