@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, Loader2, Mail, ShieldCheck } from "lucide-react";
 import { useApp } from "@/lib/store";
+import { splitFullName } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +27,7 @@ export default function VerifyEmail() {
   }, [currentUser?.email, prefillEmail]);
 
   const emailVerified = Boolean(currentUser?.emailConfirmedAt);
+  const firstName = currentUser?.firstName || splitFullName(currentUser?.fullName).firstName;
 
   const onResend = async () => {
     setError(null);
@@ -45,7 +47,11 @@ export default function VerifyEmail() {
           </span>
           <div className="min-w-0">
             <h1 className="text-2xl font-bold">
-              {emailVerified ? "Email confirmed" : "Confirm your email"}
+              {emailVerified
+                ? "Email confirmed"
+                : firstName
+                  ? `Hey ${firstName}`
+                  : "Confirm your email"}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {emailVerified

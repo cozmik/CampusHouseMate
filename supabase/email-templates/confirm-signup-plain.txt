@@ -1,6 +1,6 @@
 HouseMate — Confirm your email (optional)
 
-Welcome to HouseMate, the student way to find and hand over hostel spaces near campus.
+Hey {{ .Data.first_name }} — welcome to HouseMate, the student way to find and hand over hostel spaces near campus.
 
 When you have a moment, confirm your email address ({{ .Email }}) by opening this link:
 

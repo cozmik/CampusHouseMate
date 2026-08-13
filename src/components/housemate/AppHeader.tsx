@@ -9,13 +9,6 @@ import { cn } from "@/lib/utils";
 import { Logo } from "./Logo";
 import { ReportDialog } from "./ReportDialog";
 
-const navItems = [
-  { to: "/browse", label: "Browse", icon: Search },
-  { to: "/post", label: "Post a space", icon: Plus },
-  { to: "/messages", label: "Messages", icon: MessageSquare },
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-];
-
 export function AppHeader() {
   const { currentUser, logout } = useApp();
   const navigate = useNavigate();
@@ -25,7 +18,12 @@ export function AppHeader() {
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6 lg:px-8">
         <Logo />
         <nav className="ml-4 hidden items-center gap-1 md:flex">
-          {navItems.map((item) => (
+          {[
+            { to: "/browse", label: "Browse", icon: Search },
+            { to: "/post", label: "Post a space", icon: Plus },
+            ...(currentUser ? [{ to: "/messages", label: "Messages", icon: MessageSquare }] : []),
+            { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          ].map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -53,7 +51,7 @@ export function AppHeader() {
                     </AvatarFallback>
                   </Avatar>
                   <span className="hidden text-sm font-medium sm:block">
-                    {currentUser.fullName.split(" ")[0]}
+                    {currentUser.firstName || currentUser.fullName.split(" ")[0]}
                   </span>
                 </button>
               </DropdownMenuTrigger>

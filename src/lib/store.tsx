@@ -10,7 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { schools as schoolsData, getSchool as getSchoolData } from "@/data/schools";
 import { toast } from "sonner";
-import { uid } from "./format";
+import { joinName, namesFromMetadata, splitFullName, uid } from "./format";
 import type {
   Conversation,
   Listing,
@@ -117,10 +117,15 @@ function mapProfile(
   row: RawProfile,
   email?: string,
   emailConfirmedAt?: string | null,
+  meta?: Record<string, unknown>,
 ): Profile {
+  const names = namesFromMetadata(row.full_name, meta);
+  const split = splitFullName(row.full_name);
   return {
     id: row.id,
-    fullName: row.full_name,
+    firstName: names.firstName || split.firstName,
+    lastName: names.lastName || split.lastName,
+    fullName: names.fullName || row.full_name,
     email,
     emailConfirmedAt: emailConfirmedAt ?? undefined,
     avatarUrl: row.avatar_url ?? undefined,
@@ -164,7 +169,8 @@ function mapReport(row: RawReport): Report {
 }
 
 interface SignupInput {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   phone?: string;
@@ -195,8 +201,11 @@ interface AppContextValue {
   schools: School[];
 
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  loginWithOAuth: (provider: "google" | "facebook") => Promise<{ ok: boolean; error?: string }>;
   signup: (input: SignupInput) => Promise<{ ok: boolean; error?: string }>;
   resendEmailVerification: (email?: string) => Promise<{ ok: boolean; error?: string }>;
+  requestPasswordReset: (email: string) => Promise<{ ok: boolean; error?: string }>;
+  updatePassword: (password: string) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (patch: Partial<Profile>) => Promise<void>;
   uploadAvatar: (file: File) => Promise<string>;
@@ -264,11 +273,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const loadUserSession = useCallback(
     async (session: {
-      user: { id: string; email?: string; email_confirmed_at?: string | null };
+      user: {
+        id: string;
+        email?: string;
+        email_confirmed_at?: string | null;
+        user_metadata?: Record<string, unknown>;
+      };
     }) => {
       const userId = session.user.id;
       const email = session.user.email;
       const emailConfirmedAt = session.user.email_confirmed_at ?? null;
+      const meta = (session.user.user_metadata ?? {}) as Record<string, unknown>;
+      const names = namesFromMetadata("Student", meta);
       const [{ data: prof }, { data: contact }] = await Promise.all([
         supabase
           .from("profiles")
@@ -282,15 +298,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
           .maybeSingle(),
       ]);
       let profile: Profile | null = prof
-        ? mapProfile(prof as RawProfile, email, emailConfirmedAt)
+        ? mapProfile(prof as RawProfile, email, emailConfirmedAt, meta)
         : null;
       if (!profile) {
         await supabase
           .from("profiles")
-          .insert({ id: userId, full_name: "Student" });
+          .insert({ id: userId, full_name: names.fullName });
         profile = {
           id: userId,
-          fullName: "Student",
+          firstName: names.firstName,
+          lastName: names.lastName,
+          fullName: names.fullName,
           email,
           emailConfirmedAt: emailConfirmedAt ?? undefined,
         };
@@ -384,16 +402,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setAuthReady(true);
       if (session?.user) {
         const u = session.user;
-        const meta = (u.user_metadata ?? {}) as Record<string, string>;
+        const meta = (u.user_metadata ?? {}) as Record<string, unknown>;
+        const names = namesFromMetadata("Student", meta);
         setCurrentUser({
           id: u.id,
           email: u.email,
           emailConfirmedAt:
             (u as { email_confirmed_at?: string | null }).email_confirmed_at ??
             undefined,
-          fullName: meta.full_name || "Student",
-          avatarUrl: meta.avatar_url || undefined,
-          schoolId: meta.school_id || undefined,
+          firstName: names.firstName,
+          lastName: names.lastName,
+          fullName: names.fullName,
+          avatarUrl: String(meta.avatar_url ?? meta.picture ?? "") || undefined,
+          schoolId: String(meta.school_id ?? "") || undefined,
         });
         setTimeout(() => {
           void loadUserSession(session);
@@ -427,6 +448,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [currentUser?.email],
   );
 
+  const requestPasswordReset = useCallback(async (email: string) => {
+    const targetEmail = email.trim();
+    if (!targetEmail) return { ok: false, error: "Missing email address." };
+    const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) return { ok: false, error: error.message };
+    toast.success("Reset link sent", {
+      description: "If that email is on HouseMate, check your inbox (and spam) for a link.",
+    });
+    return { ok: true };
+  }, []);
+
+  const updatePassword = useCallback(async (password: string) => {
+    if (password.length < 6) {
+      return { ok: false, error: "Password must be at least 6 characters." };
+    }
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) return { ok: false, error: error.message };
+    toast.success("Password updated");
+    return { ok: true };
+  }, []);
+
   // Load listings (public)
   const loadListings = useCallback(async () => {
     const { data } = await supabase
@@ -459,14 +503,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
+  const loginWithOAuth = useCallback(async (provider: "google" | "facebook") => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  }, []);
+
   const signup = useCallback(async (input: SignupInput) => {
+    const firstName = input.firstName.trim();
+    const lastName = input.lastName.trim();
+    const fullName = joinName(firstName, lastName);
     const { data, error } = await supabase.auth.signUp({
       email: input.email.trim(),
       password: input.password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
         data: {
-          full_name: input.fullName.trim(),
+          first_name: firstName,
+          last_name: lastName,
+          full_name: fullName,
           phone: input.phone?.trim() || null,
           whatsapp: input.whatsapp?.trim() || input.phone?.trim() || null,
           school_id: input.schoolId || null,
@@ -486,15 +546,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (patch: Partial<Profile>) => {
       if (!currentUser) return;
       const id = currentUser.id;
+      const nextFullName =
+        patch.fullName ||
+        joinName(
+          patch.firstName ?? currentUser.firstName,
+          patch.lastName ?? currentUser.lastName,
+        ) ||
+        currentUser.fullName;
       await supabase
         .from("profiles")
         .update({
-          full_name: patch.fullName,
+          full_name: nextFullName,
           avatar_url: patch.avatarUrl,
           school_id: patch.schoolId,
           bio: patch.bio,
         })
         .eq("id", id);
+      if (patch.firstName !== undefined || patch.lastName !== undefined || patch.fullName !== undefined) {
+        await supabase.auth.updateUser({
+          data: {
+            first_name: patch.firstName ?? currentUser.firstName,
+            last_name: patch.lastName ?? currentUser.lastName,
+            full_name: nextFullName,
+          },
+        });
+      }
       if (patch.phone !== undefined || patch.whatsapp !== undefined) {
         await supabase.from("contact_details").upsert(
           {
@@ -1045,8 +1121,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       currentUser,
       schools: schoolsData,
       login,
+      loginWithOAuth,
       signup,
       resendEmailVerification,
+      requestPasswordReset,
+      updatePassword,
       logout,
       updateProfile,
       uploadAvatar,
@@ -1083,8 +1162,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       authReady,
       currentUser,
       login,
+      loginWithOAuth,
       signup,
       resendEmailVerification,
+      requestPasswordReset,
+      updatePassword,
       logout,
       updateProfile,
       uploadAvatar,

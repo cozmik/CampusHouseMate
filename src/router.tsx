@@ -13,6 +13,9 @@ import Profile from "./pages/Profile";
 import AdminReports from "./pages/AdminReports";
 import AdminUsers from "./pages/AdminUsers";
 import VerifyEmail from "./pages/VerifyEmail";
+import AuthCallback from "./pages/AuthCallback";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import { AppLayout } from "@/components/housemate/AppLayout";
 import { AdminLayout } from "@/components/housemate/AdminLayout";
 import { ProtectedRoute } from "@/components/housemate/ProtectedRoute";
@@ -21,6 +24,9 @@ import { AdminRoute } from "@/components/housemate/AdminRoute";
 export const routers = [
   { path: "/login", name: "login", element: <Login /> },
   { path: "/signup", name: "signup", element: <Signup /> },
+  { path: "/forgot-password", name: "forgot-password", element: <ForgotPassword /> },
+  { path: "/reset-password", name: "reset-password", element: <ResetPassword /> },
+  { path: "/auth/callback", name: "auth-callback", element: <AuthCallback /> },
   { path: "/verify-email", name: "verify-email", element: <AppLayout><VerifyEmail /></AppLayout> },
   { path: "/", name: "home", element: <AppLayout><Index /></AppLayout> },
   { path: "/browse", name: "browse", element: <AppLayout><Browse /></AppLayout> },

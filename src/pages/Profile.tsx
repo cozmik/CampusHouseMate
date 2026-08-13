@@ -10,14 +10,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SchoolCombobox } from "@/components/housemate/SchoolCombobox";
 import { ReportDialog } from "@/components/housemate/ReportDialog";
-import { initials } from "@/lib/format";
+import { initials, joinName, splitFullName } from "@/lib/format";
 
 export default function Profile() {
   const { currentUser, updateProfile, uploadAvatar } = useApp();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [fullName, setFullName] = useState(currentUser?.fullName ?? "");
+  const [firstName, setFirstName] = useState(currentUser?.firstName ?? splitFullName(currentUser?.fullName).firstName);
+  const [lastName, setLastName] = useState(currentUser?.lastName ?? splitFullName(currentUser?.fullName).lastName);
   const [phone, setPhone] = useState(currentUser?.phone ?? "");
   const [whatsapp, setWhatsapp] = useState(currentUser?.whatsapp ?? "");
   const [bio, setBio] = useState(currentUser?.bio ?? "");
@@ -46,7 +47,9 @@ export default function Profile() {
     setSaving(true);
     try {
       await updateProfile({
-        fullName: fullName.trim() || currentUser.fullName,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        fullName: joinName(firstName.trim(), lastName.trim()) || currentUser.fullName,
         phone: phone.trim(),
         whatsapp: whatsapp.trim() || phone.trim(),
         bio: bio.trim() || undefined,
@@ -71,8 +74,8 @@ export default function Profile() {
       <div className="space-y-6 rounded-3xl border border-border/70 bg-card p-6 shadow-card">
         <div className="flex items-center gap-4">
           <Avatar className="h-20 w-20">
-            <AvatarImage src={avatarUrl} alt={fullName} />
-            <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">{initials(fullName || "U")}</AvatarFallback>
+            <AvatarImage src={avatarUrl} alt={joinName(firstName, lastName) || currentUser.fullName} />
+            <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">{initials(joinName(firstName, lastName) || "U")}</AvatarFallback>
           </Avatar>
           <div className="space-y-2">
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
@@ -86,11 +89,17 @@ export default function Profile() {
             </div>
           </div>
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="fullName">Full name</Label>
-          <div className="relative">
-            <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} className="pl-9" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="firstName">First name</Label>
+            <div className="relative">
+              <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input id="firstName" autoComplete="given-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="pl-9" />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="lastName">Last name</Label>
+            <Input id="lastName" autoComplete="family-name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
           </div>
         </div>
         <div className="space-y-1.5">

@@ -106,6 +106,32 @@ export function initials(name: string): string {
   return name.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("");
 }
 
+export function joinName(firstName?: string, lastName?: string): string {
+  return [firstName, lastName].map((part) => part?.trim()).filter(Boolean).join(" ");
+}
+
+export function splitFullName(fullName?: string): { firstName: string; lastName: string } {
+  const parts = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
+  return { firstName: parts[0] ?? "", lastName: parts.slice(1).join(" ") };
+}
+
+export function namesFromMetadata(
+  fallbackName: string,
+  meta?: Record<string, unknown>,
+): { firstName: string; lastName: string; fullName: string } {
+  const given = String(meta?.first_name ?? meta?.given_name ?? "").trim();
+  const family = String(meta?.last_name ?? meta?.family_name ?? "").trim();
+  if (given || family) {
+    return { firstName: given, lastName: family, fullName: joinName(given, family) || fallbackName };
+  }
+  const split = splitFullName(String(meta?.full_name ?? meta?.name ?? fallbackName));
+  return {
+    firstName: split.firstName,
+    lastName: split.lastName,
+    fullName: joinName(split.firstName, split.lastName) || fallbackName,
+  };
+}
+
 export function uid(prefix = "id"): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36).slice(-4)}`;
 }

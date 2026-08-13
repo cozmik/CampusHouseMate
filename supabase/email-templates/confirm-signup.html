@@ -6,6 +6,7 @@
     {{ .ConfirmationURL }}  — main verify link
     {{ .Email }}            — recipient email
     {{ .SiteURL }}          — site URL from project settings
+    {{ .Data.first_name }}  — from signup user_metadata
 
   Optional: replace {{ .SiteURL }}/brand/hmf-dark.png with your hosted logo URL.
 -->
@@ -69,7 +70,7 @@
               </h1>
 
               <p style="margin:0 0 8px;font-size:15px;line-height:1.6;color:#6B7A85;">
-                Hi there — welcome to <strong style="color:#152028;">HouseMate</strong>, the student way to find and hand over hostel spaces near campus.
+                Hey {{ .Data.first_name }} — welcome to <strong style="color:#152028;">HouseMate</strong>, the student way to find and hand over hostel spaces near campus.
               </p>
               <p style="margin:0;font-size:15px;line-height:1.6;color:#6B7A85;">
                 Tap the button below to confirm <strong style="color:#152028;">{{ .Email }}</strong>. It’s optional, but it helps other students trust your profile and makes account recovery easier.

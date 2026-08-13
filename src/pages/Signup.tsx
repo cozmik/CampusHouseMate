@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/housemate/Logo";
 import { SchoolCombobox } from "@/components/housemate/SchoolCombobox";
+import { SocialAuth } from "@/components/housemate/SocialAuth";
 
 export default function Signup() {
   const { signup } = useApp();
   const navigate = useNavigate();
 
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
@@ -25,11 +27,15 @@ export default function Signup() {
     e.preventDefault();
     setError("");
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("Please enter your first and last name.");
+      return;
+    }
     const trimmedEmail = email.trim();
     const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
     if (!okEmail) { setError("Please enter a valid email address."); return; }
     setLoading(true);
-    const res = await signup({ fullName, email: trimmedEmail, password, phone, whatsapp, schoolId });
+    const res = await signup({ firstName: firstName.trim(), lastName: lastName.trim(), email: trimmedEmail, password, phone, whatsapp, schoolId });
     setLoading(false);
     if (res.ok) navigate("/dashboard", { replace: true });
     else setError(res.error ?? "Could not create account.");
@@ -45,11 +51,17 @@ export default function Signup() {
           <h1 className="text-2xl font-bold">Create your account</h1>
           <p className="mt-1 text-sm text-muted-foreground">One account lets you post a space and message others.</p>
           <form onSubmit={onSubmit} className="mt-7 space-y-5">
-            <div className="space-y-1.5">
-              <Label htmlFor="name">Full name</Label>
-              <div className="relative">
-                <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="name" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Joy Eze" className="pl-9" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="firstName">First name</Label>
+                <div className="relative">
+                  <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input id="firstName" autoComplete="given-name" required value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Joy" className="pl-9" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="lastName">Last name</Label>
+                <Input id="lastName" autoComplete="family-name" required value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Eze" />
               </div>
             </div>
             <div className="space-y-1.5">
@@ -88,6 +100,9 @@ export default function Signup() {
               {loading ? "Creating account…" : "Create account"}<ArrowRight className="h-4 w-4" />
             </Button>
           </form>
+          <div className="mt-5">
+            <SocialAuth label="Sign up with" />
+          </div>
           <p className="mt-5 text-center text-sm text-muted-foreground">Already have an account? <Link to="/login" className="font-semibold text-primary">Log in</Link></p>
         </div>
       </div>

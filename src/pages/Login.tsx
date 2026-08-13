@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/housemate/Logo";
+import { SocialAuth } from "@/components/housemate/SocialAuth";
 
 export default function Login() {
   const { login, resendEmailVerification } = useApp();
@@ -74,7 +75,12 @@ export default function Login() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor="password">Password</Label>
+                <Link to="/forgot-password" className="text-xs font-semibold text-primary">
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="pl-9" />
@@ -112,6 +118,9 @@ export default function Login() {
               {loading ? "Logging in…" : "Log in"}<ArrowRight className="h-4 w-4" />
             </Button>
           </form>
+          <div className="mt-5">
+            <SocialAuth label="Continue with" />
+          </div>
           <p className="mt-5 text-center text-sm text-muted-foreground">New here? <Link to="/signup" className="font-semibold text-primary">Create an account</Link></p>
         </div>
       </div>
