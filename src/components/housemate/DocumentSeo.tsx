@@ -78,7 +78,7 @@ export function DocumentSeo() {
             "@type": "Organization",
             name: SITE_NAME,
             url: siteOrigin(),
-            logo: `${siteOrigin()}/brand/hmf-circle.png`,
+            logo: `${siteOrigin()}/web-app-manifest-512x512.png`,
             description: "Student hostel handover marketplace for Nigerian campuses.",
           },
         ],
