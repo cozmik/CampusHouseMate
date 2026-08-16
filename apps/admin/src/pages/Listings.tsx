@@ -72,7 +72,7 @@ export default function Listings() {
       header: "Listing",
       render: (l) => (
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black/5">
             {l.photos[0] ? (
               <img src={l.photos[0].url} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -163,7 +163,7 @@ export default function Listings() {
             placeholder="Search listings"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="h-10 bg-white/[0.03] pl-10"
+            className="h-10 bg-black/[0.03] pl-10"
           />
         </div>
       </div>

@@ -31,16 +31,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    void (async () => {
-      await refreshProfile();
-      if (mounted) setSessionReady(true);
-    })();
+    let busy = false;
+    const loadProfile = async () => {
+      if (busy) return;
+      busy = true;
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session?.user) {
+          if (mounted) setUser(null);
+          return;
+        }
+        const profile = await fetchProfileById(session.user.id);
+        if (mounted) setUser(profile);
+      } catch {
+        if (mounted) setUser(null);
+      } finally {
+        busy = false;
+        if (mounted) setSessionReady(true);
+      }
+    };
+    void loadProfile();
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === "SIGNED_OUT") {
         setUser(null);
-      } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        await refreshProfile();
+        setSessionReady(true);
+      } else if (
+        event === "INITIAL_SESSION" ||
+        event === "SIGNED_IN" ||
+        event === "TOKEN_REFRESHED"
+      ) {
+        void loadProfile();
       }
     });
 

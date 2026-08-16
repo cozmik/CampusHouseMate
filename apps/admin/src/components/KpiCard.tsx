@@ -12,17 +12,17 @@ export interface KpiCardProps {
 }
 
 const ACCENTS: Record<NonNullable<KpiCardProps["accent"]>, { bg: string; icon: string }> = {
-  teal: { bg: "from-teal-500/25 to-teal-500/0", icon: "text-teal-300" },
-  coral: { bg: "from-coral/25 to-coral/0", icon: "text-coral" },
-  emerald: { bg: "from-emerald-500/25 to-emerald-500/0", icon: "text-emerald-300" },
-  amber: { bg: "from-amber-500/25 to-amber-500/0", icon: "text-amber-300" },
-  rose: { bg: "from-rose-500/25 to-rose-500/0", icon: "text-rose-300" },
-  sky: { bg: "from-sky-500/25 to-sky-500/0", icon: "text-sky-300" },
+  teal: { bg: "from-teal-500/20 to-teal-500/0", icon: "text-teal-700" },
+  coral: { bg: "from-coral/25 to-coral/0", icon: "text-coral-deep" },
+  emerald: { bg: "from-emerald-500/25 to-emerald-500/0", icon: "text-emerald-600" },
+  amber: { bg: "from-amber-500/25 to-amber-500/0", icon: "text-amber-600" },
+  rose: { bg: "from-rose-500/25 to-rose-500/0", icon: "text-rose-600" },
+  sky: { bg: "from-sky-500/25 to-sky-500/0", icon: "text-sky-600" },
 };
 
 const DELTA_STYLES = {
-  up: "bg-emerald-500/10 text-emerald-400",
-  down: "bg-rose-500/10 text-rose-400",
+  up: "bg-emerald-500/10 text-emerald-600",
+  down: "bg-rose-500/10 text-rose-600",
 };
 
 export function KpiCard({ label, value, icon: Icon, delta, deltaLabel, hint, accent = "teal" }: KpiCardProps) {
@@ -42,7 +42,7 @@ export function KpiCard({ label, value, icon: Icon, delta, deltaLabel, hint, acc
           <span className="text-sm font-medium text-muted-foreground">{label}</span>
           <span
             className={cn(
-              "flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 transition-transform duration-300 group-hover:scale-110",
+              "flex h-9 w-9 items-center justify-center rounded-xl bg-black/5 transition-transform duration-300 group-hover:scale-110",
               ACCENTS[accent].icon,
             )}
           >

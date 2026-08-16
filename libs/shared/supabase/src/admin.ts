@@ -155,6 +155,53 @@ export async function setUserSuspended(id: string, isSuspended: boolean): Promis
   await supabase.from("profiles").update({ is_suspended: isSuspended }).eq("id", id);
 }
 
+export interface AdminUserDetail extends AdminUser {
+  listings: Listing[];
+  conversationsCount: number;
+  savedCount: number;
+}
+
+export async function fetchUserDetail(userId: string): Promise<AdminUserDetail | null> {
+  const [profileRes, contactRes, listingRes, convRes, savedRes] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+    supabase
+      .from("contact_details")
+      .select("user_id, phone, whatsapp")
+      .eq("user_id", userId)
+      .maybeSingle(),
+    supabase
+      .from("listings")
+      .select("*, listing_photos(*)")
+      .eq("owner_id", userId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("conversations")
+      .select("id")
+      .or(`seeker_id.eq.${userId},lister_id.eq.${userId}`),
+    supabase.from("saved_listings").select("id").eq("user_id", userId),
+  ]);
+
+  const profileRow = profileRes.data as unknown as RawProfile | null;
+  if (!profileRow) return null;
+
+  const contact = contactRes.data as unknown as {
+    user_id: string;
+    phone: string | null;
+    whatsapp: string | null;
+  } | null;
+
+  return {
+    ...mapProfile(profileRow),
+    phone: contact?.phone ?? undefined,
+    whatsapp: contact?.whatsapp ?? undefined,
+    listingCount: (listingRes.data ?? []).length,
+    joinedAt: profileRow.created_at,
+    listings: ((listingRes.data ?? []) as unknown as RawListing[]).map(mapListing),
+    conversationsCount: convRes.data?.length ?? 0,
+    savedCount: savedRes.data?.length ?? 0,
+  };
+}
+
 export async function fetchAllReports(): Promise<Report[]> {
   const { data, error } = await supabase
     .from("reports")

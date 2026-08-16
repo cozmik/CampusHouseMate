@@ -54,9 +54,9 @@ function ChartTip({ active, payload, label }: ChartTipProps) {
 }
 
 const STATUS_META = [
-  { key: "available", label: "Available", bar: "bg-emerald-400", text: "text-emerald-400" },
-  { key: "pending", label: "Pending", bar: "bg-amber-400", text: "text-amber-400" },
-  { key: "taken", label: "Taken", bar: "bg-slate-400", text: "text-slate-400" },
+  { key: "available", label: "Available", bar: "bg-emerald-500", text: "text-emerald-600" },
+  { key: "pending", label: "Pending", bar: "bg-amber-500", text: "text-amber-600" },
+  { key: "taken", label: "Taken", bar: "bg-slate-500", text: "text-slate-500" },
 ] as const;
 
 export default function Dashboard() {
@@ -65,8 +65,11 @@ export default function Dashboard() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    setOverview(await fetchAdminOverview());
-    setLoading(false);
+    try {
+      setOverview(await fetchAdminOverview());
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -252,7 +255,7 @@ export default function Dashboard() {
                       <span className="ml-1 text-xs text-muted-foreground">({pct}%)</span>
                     </span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-white/5">
+                  <div className="h-2 overflow-hidden rounded-full bg-black/5">
                     <div
                       className={cn("h-full rounded-full transition-all duration-700", bar)}
                       style={{ width: `${pct}%` }}

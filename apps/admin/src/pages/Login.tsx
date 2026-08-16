@@ -43,7 +43,7 @@ export default function Login() {
           <img
             src="/brand/hmf-circle.png"
             alt="Housemates Finder"
-            className="mb-4 h-12 w-12 rounded-2xl ring-1 ring-white/10"
+            className="mb-4 h-12 w-12 rounded-2xl ring-1 ring-black/10"
           />
           <h1 className="font-display text-xl font-semibold tracking-tight">Housemates Admin</h1>
           <p className="mt-1 text-sm text-muted-foreground">Back office access only</p>
@@ -64,7 +64,7 @@ export default function Login() {
                 placeholder="admin@housemates.ng"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-11 bg-white/[0.03] pl-10"
+                className="h-11 bg-black/[0.03] pl-10"
               />
             </div>
           </div>
@@ -83,13 +83,13 @@ export default function Login() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-11 bg-white/[0.03] pl-10"
+                className="h-11 bg-black/[0.03] pl-10"
               />
             </div>
           </div>
 
           {error ? (
-            <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-400">{error}</p>
+            <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-600">{error}</p>
           ) : null}
 
           <Button type="submit" disabled={submitting} className="h-11 w-full font-medium">

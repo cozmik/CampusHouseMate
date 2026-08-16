@@ -13,16 +13,16 @@ export type StatusTone =
   | "muted";
 
 const TONES: Record<StatusTone, string> = {
-  available: "bg-emerald-500/10 text-emerald-400 ring-emerald-500/25",
-  pending: "bg-amber-500/10 text-amber-400 ring-amber-500/25",
-  taken: "bg-slate-500/10 text-slate-300 ring-slate-500/25",
-  open: "bg-rose-500/10 text-rose-400 ring-rose-500/25",
-  reviewing: "bg-amber-500/10 text-amber-400 ring-amber-500/25",
-  resolved: "bg-emerald-500/10 text-emerald-400 ring-emerald-500/25",
-  admin: "bg-teal-500/10 text-teal-300 ring-teal-500/25",
-  user: "bg-zinc-500/10 text-zinc-300 ring-zinc-500/25",
-  suspended: "bg-rose-500/10 text-rose-400 ring-rose-500/25",
-  muted: "bg-zinc-500/10 text-zinc-400 ring-zinc-500/25",
+  available: "bg-emerald-500/10 text-emerald-700 ring-emerald-500/25",
+  pending: "bg-amber-500/10 text-amber-700 ring-amber-500/25",
+  taken: "bg-slate-500/10 text-slate-600 ring-slate-500/25",
+  open: "bg-rose-500/10 text-rose-700 ring-rose-500/25",
+  reviewing: "bg-amber-500/10 text-amber-700 ring-amber-500/25",
+  resolved: "bg-emerald-500/10 text-emerald-700 ring-emerald-500/25",
+  admin: "bg-teal-500/10 text-teal-700 ring-teal-500/25",
+  user: "bg-zinc-500/10 text-zinc-600 ring-zinc-500/25",
+  suspended: "bg-rose-500/10 text-rose-700 ring-rose-500/25",
+  muted: "bg-zinc-500/10 text-zinc-600 ring-zinc-500/25",
 };
 
 export function StatusBadge({

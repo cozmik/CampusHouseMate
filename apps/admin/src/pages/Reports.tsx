@@ -54,7 +54,7 @@ export default function Reports() {
       header: "Target",
       render: (r) => (
         <div className="leading-tight">
-          <Badge variant="outline" className="mb-1 border-white/10 bg-white/5 text-xs capitalize text-muted-foreground">
+          <Badge variant="outline" className="mb-1 border-black/10 bg-black/5 text-xs capitalize text-muted-foreground">
             {r.targetType}
           </Badge>
           {r.targetId ? <p className="max-w-[16rem] truncate font-mono text-xs text-muted-foreground">{r.targetId}</p> : null}

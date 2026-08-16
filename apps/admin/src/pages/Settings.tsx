@@ -37,7 +37,7 @@ export default function Settings() {
               <Mail className="h-3.5 w-3.5" />
               {user?.email ?? "no email"}
             </p>
-            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-teal-500/10 px-2.5 py-0.5 text-xs font-medium text-teal-300 ring-1 ring-inset ring-teal-500/25">
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-teal-500/10 px-2.5 py-0.5 text-xs font-medium text-teal-700 ring-1 ring-inset ring-teal-500/25">
               <ShieldCheck className="h-3.5 w-3.5" />
               Administrator
             </span>
@@ -50,7 +50,7 @@ export default function Settings() {
         <p className="mt-1 text-sm text-muted-foreground">
           Signing out ends your session on this device. You will need your credentials to sign back in.
         </p>
-        <Button variant="outline" className="mt-4 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300" onClick={() => void handleSignOut()}>
+        <Button variant="outline" className="mt-4 text-rose-600 hover:bg-rose-500/10 hover:text-rose-700" onClick={() => void handleSignOut()}>
           <LogOut className="mr-2 h-4 w-4" />
           Sign out
         </Button>

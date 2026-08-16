@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Ban,
+  Eye,
   Loader2,
   RefreshCw,
   Search,
@@ -32,6 +34,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 
 export default function Users() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -77,12 +80,17 @@ export default function Users() {
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
             {u.avatarUrl ? <AvatarImage src={u.avatarUrl} alt={u.fullName} /> : null}
-            <AvatarFallback className="bg-white/5 text-xs">{initials(u.fullName) || "U"}</AvatarFallback>
+            <AvatarFallback className="bg-black/5 text-xs">{initials(u.fullName) || "U"}</AvatarFallback>
           </Avatar>
-          <div className="leading-tight">
-            <p className="font-medium text-foreground">{u.fullName || "—"}</p>
-            <p className="text-xs text-muted-foreground">{u.email || "no email"}</p>
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate(`/users/${u.id}`)}
+            className="min-w-0 text-left leading-tight hover:underline"
+            title="View profile"
+          >
+            <p className="truncate font-medium text-foreground">{u.fullName || "—"}</p>
+            <p className="truncate text-xs text-muted-foreground">{u.email || "no email"}</p>
+          </button>
         </div>
       ),
     },
@@ -129,26 +137,31 @@ export default function Users() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuItem onClick={() => navigate(`/users/${u.id}`)}>
+              <Eye className="mr-2 h-4 w-4 text-sky-600" />
+              View profile
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             {u.isAdmin ? (
               <DropdownMenuItem onClick={() => void toggleAdmin(u)}>
-                <ShieldOff className="mr-2 h-4 w-4 text-amber-400" />
+                <ShieldOff className="mr-2 h-4 w-4 text-amber-600" />
                 Remove admin
               </DropdownMenuItem>
             ) : (
               <DropdownMenuItem onClick={() => void toggleAdmin(u)}>
-                <ShieldCheck className="mr-2 h-4 w-4 text-teal-300" />
+                <ShieldCheck className="mr-2 h-4 w-4 text-teal-600" />
                 Grant admin
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
             {u.isSuspended ? (
               <DropdownMenuItem onClick={() => void toggleSuspended(u)}>
-                <Undo2 className="mr-2 h-4 w-4 text-emerald-400" />
+                <Undo2 className="mr-2 h-4 w-4 text-emerald-600" />
                 Reinstate user
               </DropdownMenuItem>
             ) : (
-              <DropdownMenuItem onClick={() => void toggleSuspended(u)} className="focus:text-rose-400">
-                <Ban className="mr-2 h-4 w-4 text-rose-400" />
+              <DropdownMenuItem onClick={() => void toggleSuspended(u)} className="focus:text-rose-600">
+                <Ban className="mr-2 h-4 w-4 text-rose-600" />
                 Suspend user
               </DropdownMenuItem>
             )}
@@ -178,7 +191,7 @@ export default function Users() {
             placeholder="Search by name or email"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="h-10 bg-white/[0.03] pl-10"
+            className="h-10 bg-black/[0.03] pl-10"
           />
         </div>
       </div>

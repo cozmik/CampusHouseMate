@@ -41,8 +41,8 @@ export function DataTable<T extends { id: string }>({
   if (rows.length === 0) {
     return (
       <div className="glass flex min-h-[16rem] flex-col items-center justify-center gap-2 rounded-2xl">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5">
-          <Inbox className="h-5 w-5 text-muted-foreground" />
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-black/5">
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         </span>
         <p className="text-sm text-muted-foreground">{empty ?? "No records yet."}</p>
       </div>
@@ -53,7 +53,7 @@ export function DataTable<T extends { id: string }>({
     <div className="glass overflow-hidden rounded-2xl">
       <Table>
         <TableHeader>
-          <TableRow className="border-border/60 bg-white/[0.02] hover:bg-white/[0.02]">
+          <TableRow className="border-border/60 bg-black/[0.02] hover:bg-black/[0.02]">
             {columns.map((col) => (
               <TableHead key={col.key} className={cn("h-11 text-xs font-medium uppercase tracking-wider text-muted-foreground", col.className)}>
                 {col.header}
@@ -65,7 +65,7 @@ export function DataTable<T extends { id: string }>({
           {rows.map((row) => (
             <TableRow
               key={row.id}
-              className={cn("border-border/40 transition-colors hover:bg-white/[0.03]", rowClassName?.(row))}
+              className={cn("border-border/40 transition-colors hover:bg-black/[0.03]", rowClassName?.(row))}
             >
               {columns.map((col) => (
                 <TableCell key={col.key} className={cn("py-3 text-sm", col.className)}>

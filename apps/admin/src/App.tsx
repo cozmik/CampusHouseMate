@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { AdminLayout } from "@/components/AdminLayout";
 import Dashboard from "@/pages/Dashboard";
 import Users from "@/pages/Users";
+import UserDetail from "@/pages/UserDetail";
 import Listings from "@/pages/Listings";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/users" element={<Users />} />
+            <Route path="/users/:id" element={<UserDetail />} />
             <Route path="/listings" element={<Listings />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />

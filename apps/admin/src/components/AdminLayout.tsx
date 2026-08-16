@@ -32,7 +32,7 @@ export function AdminLayout() {
 
   return (
     <div className="min-h-screen">
-      <Sidebar />
+      <Sidebar className="fixed inset-y-0 left-0 z-20 hidden md:flex" />
 
       {/* Mobile sidebar */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -43,7 +43,7 @@ export function AdminLayout() {
         </SheetTrigger>
         <SheetContent side="left" className="w-64 border-r border-border/60 bg-card/90 p-0">
           <SheetTitle className="sr-only">Admin navigation</SheetTitle>
-          <Sidebar />
+          <Sidebar className="flex md:hidden" />
         </SheetContent>
       </Sheet>
 
@@ -53,7 +53,7 @@ export function AdminLayout() {
             <img
               src="/brand/hmf-circle.png"
               alt="Housemates Finder"
-              className="h-8 w-8 rounded-full ring-1 ring-white/10"
+              className="h-8 w-8 rounded-full ring-1 ring-black/10"
             />
             <span className="font-display text-sm font-semibold">Housemates Admin</span>
           </div>
