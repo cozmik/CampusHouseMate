@@ -1,0 +1,26 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@housemates/shared-types": ["../../libs/shared/types/src/index.ts"],
+      "@housemates/shared-utils": ["../../libs/shared/utils/src/index.ts"],
+      "@housemates/shared-data": ["../../libs/shared/data/src/index.ts"],
+      "@housemates/shared-supabase": ["../../libs/shared/supabase/src/index.ts"],
+      "@housemates/shared-ui": ["../../libs/shared/ui/src/index.ts"],
+      "@housemates/shared-ui/*": ["../../libs/shared/ui/src/*"]
+    }
+  },
+  "include": ["src", "i18n.config.json"]
+}

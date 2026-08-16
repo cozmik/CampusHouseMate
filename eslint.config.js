@@ -5,12 +5,27 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  // src/components/ui/** is shadcn scaffolding: generated vendor-style code
-  // the user never wrote. Linting it trips the platform's build gate on
-  // noise (e.g. no-explicit-any in newly added shadcn components) and feeds
-  // an AI "fix" loop against code that shouldn't change — every retry
-  // billed. Ignore it wholesale; the user's own code stays fully linted.
-  { ignores: ["dist", "src/components/ui/**", "e2e/**", "playwright.config.ts", "playwright-report/**", "test-results/**"] },
+  // Vendor-style scaffolding the team never hand-writes: shadcn/ui kit under
+  // libs/shared/ui. Linting it trips the build gate on noise (e.g.
+  // no-explicit-any in generated components) and feeds an AI "fix" loop
+  // against code that shouldn't change. Ignore wholesale; our own code in
+  // apps/ and libs/shared stays fully linted.
+  {
+    ignores: [
+      "dist",
+      "**/node_modules/**",
+      ".nx/**",
+      "libs/shared/ui/**",
+      "apps/**/e2e/**",
+      "apps/**/playwright.config.ts",
+      "playwright-report/**",
+      "test-results/**",
+      "apps/web/scripts/**",
+      "apps/web/i18n.scan.json",
+      "apps/web/reports/**",
+      "apps/web/docs/**",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

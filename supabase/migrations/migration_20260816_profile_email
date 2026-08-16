@@ -1,0 +1,95 @@
+-- ============ Persist user email on public.profiles ============
+-- Previously the app stored emails only in auth.users, which the anon key
+-- cannot query, so user lists and the profile page had no email. Add an email
+-- column, backfill existing rows, and keep it in sync with auth.users.
+
+alter table public.profiles add column if not exists email text;
+
+-- Backfill existing profiles from auth.users
+update public.profiles p
+set email = u.email
+from auth.users u
+where p.id = u.id
+  and p.email is null
+  and u.email is not null;
+
+-- Include email when a profile is created from an auth user (covers both
+-- email/password and Google signups)
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, full_name, avatar_url, school_id, bio, email)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'full_name', 'Student'),
+    new.raw_user_meta_data->>'avatar_url',
+    new.raw_user_meta_data->>'school_id',
+    new.raw_user_meta_data->>'bio',
+    new.email
+  )
+  on conflict (id) do update set
+    full_name = coalesce(excluded.full_name, public.profiles.full_name),
+    avatar_url = coalesce(excluded.avatar_url, public.profiles.avatar_url),
+    school_id = coalesce(excluded.school_id, public.profiles.school_id),
+    bio = coalesce(excluded.bio, public.profiles.bio),
+    email = coalesce(excluded.email, public.profiles.email);
+
+  insert into public.contact_details (user_id, phone, whatsapp)
+  values (
+    new.id,
+    new.raw_user_meta_data->>'phone',
+    new.raw_user_meta_data->>'whatsapp'
+  )
+  on conflict (user_id) do update set
+    phone = coalesce(excluded.phone, public.contact_details.phone),
+    whatsapp = coalesce(excluded.whatsapp, public.contact_details.whatsapp),
+    updated_at = now();
+
+  return new;
+end;
+$$;
+
+-- Keep email in sync if the auth user's email ever changes
+create or replace function public.sync_profile_email()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.profiles set email = new.email where id = new.id;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_email_changed on auth.users;
+create trigger on_auth_user_email_changed
+after update of email on auth.users
+for each row execute function public.sync_profile_email();
+
+-- Users can see their email but never edit it directly — it is managed by
+-- auth.users and kept in sync by the triggers above. Force the column back to
+-- its previous value on any authenticated update (admins via the dashboard /
+-- service role can still change it).
+create or replace function public.protect_profile_email()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.role() = 'authenticated' then
+    new.email := old.email;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists protect_profile_email_trigger on public.profiles;
+create trigger protect_profile_email_trigger
+before update on public.profiles
+for each row execute function public.protect_profile_email();

@@ -1,0 +1,7 @@
+packages:
+  - apps/*
+  - libs/shared/*
+
+allowBuilds:
+  esbuild: true
+  nx: true

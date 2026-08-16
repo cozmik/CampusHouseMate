@@ -1,151 +1,113 @@
-# Welcome to your Enter project
+# Housemates Finder (CampusHouseMate)
 
-[![Built with enter.pro](https://img.shields.io/badge/Build%20with-Enter.pro-FC5776?style=for-the-badge&labelColor=1F1F1F)](https://enter.pro)
+Back-office and marketplace monorepo for the "Housemates Finder" campus housing platform.
 
-*Automatically synced with your [enter.pro](https://enter.pro) workspace* 
+This is an **Nx monorepo** managed with **pnpm workspaces**. It contains a customer-facing marketplace app (`apps/web`), a back-office admin app (`apps/admin`), shared libraries (`libs/shared/*`), and the Supabase schema/migrations (`supabase/`).
 
 ---
 
 ## Overview
 
-This repository is automatically linked to your app on [enter.pro](https://enter.pro).  
-Every change you make in Enter will be reflected here — and any updates you push to this repo will sync back seamlessly.  
+| Package | Description |
+| --- | --- |
+| `apps/web` | Public marketplace: listing browse, saved listings, chat, profile, i18n. Vite + React on port `8080`. |
+| `apps/admin` | Back-office: dashboard KPIs/charts, user & listing moderation, reports, settings. Vite + React on port `8090`. |
+| `libs/shared/ui` | `@housemates/shared-ui` — shared UI components (shadcn-based: button, card, dialog, table, toaster, …). |
+| `libs/shared/data` | `@housemates/shared-data` — shared business data, schools list, constants. |
+| `libs/shared/types` | `@housemates/shared-types` — shared TypeScript types (Listing, Profile, Report, …). |
+| `libs/shared/utils` | `@housemates/shared-utils` — shared helpers (`cn`, formatting, dates, …). |
+| `libs/shared/supabase` | `@housemates/shared-supabase` — Supabase client + typed data access (web queries + admin data layer). |
+| `supabase/` | SQL migrations and RLS policies (SQL, not linked to the `supabase` CLI). |
 
-Enter.pro helps you **build, edit, and deploy full-stack web apps by prompting**.  
-Just describe what you want — Enter turns ideas into production-ready code.
-
----
-
-## Project URLs
-
-**Live app:** https://<project-id>-latest.preview.enter.pro  
-**Edit & build in Enter:** https://enter.pro/project/<project-id>
-
-
----
-
-## Continue building
-
-Keep developing your app directly in [Enter.pro](https://enter.pro/project/<project-id>).  
-Prompt new features, refine the UI, or connect integrations — all changes are versioned and synced automatically to GitHub.
+> Shared package names are **flat** scoped names (`@housemates/shared-ui`), not subpaths (`@housemates/shared/ui`), because npm forbids `/` inside the package name part.
 
 ---
 
 ## Local development
 
-Prefer to work locally? You can clone this repo and start developing right away:
+Prerequisites: **Node 20+** and **pnpm** installed.
 
 ```bash
-# Step 1: Clone your project repository
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate into the project folder
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install all dependencies
-pnpm install
-
-# Step 4: Start the local development server
-pnpm dev
+pnpm install          # install all workspace deps
 ```
 
-Push your commits — Enter.pro will automatically detect and sync your latest changes.
+Run an app (root scripts delegate to Nx):
+
+```bash
+pnpm dev              # web app  -> http://localhost:8080
+pnpm dev:admin        # admin app -> http://localhost:8090
+pnpm dev:web          # same as pnpm dev
+```
+
+### Environment
+
+Each app reads `.env` from its own directory:
+
+- `apps/web/.env.example` → copy to `apps/web/.env`
+- `apps/admin/.env.example` → copy to `apps/admin/.env`
+
+Required variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
 
 ---
 
-## i18n
+## Nx / pnpm workspace commands
 
-This template ships a minimal browser-side i18n baseline built on:
+Run from the repo root:
 
-- `i18next`
-- `react-i18next`
-- `i18next-http-backend`
-- `i18next-browser-languagedetector`
-
-### Source-of-truth files
-
-The template only owns three pieces of i18n data:
-
-- `i18n.config.json` — language manifest (`fallbackLng`, `languages[].{code,label,detect,dir}`)
-- `public/locales/{code}.json` — flat dotted-key translations, one file per language
-- `src/i18n/config.ts` + `src/i18n/util.ts` — runtime entry and pure helpers
-- `src/components/language-switcher.tsx` — neutral-themed UI sample
-
-### Runtime behavior
-
-- reads the manifest from `i18n.config.json`
-- loads translations from `public/locales/{code}.json` via `i18next-http-backend`
-- detects language from cookie, browser, then html tag; caches in the `i18next` cookie
-- normalizes unsupported languages to `fallbackLng` (no invalid values stored in cookies)
-- syncs `<html lang>` and `<html dir>` on init and on `languageChanged`
-- treats keys as flat strings: both `keySeparator` and `nsSeparator` are disabled
-
-### Using translations in components
-
-Import directly from `react-i18next`. No project-specific hook or cast is needed.
-
-```tsx
-import { useTranslation } from "react-i18next";
-
-const Title = () => {
-  const { t } = useTranslation();
-  return <h1>{t("home.hero.title")}</h1>;
-};
+```bash
+pnpm build            # build all projects (web + admin + libs)
+pnpm build:web        # build the web app only
+pnpm build:admin      # build the admin app only
+pnpm lint             # lint all projects
+pnpm typecheck        # typecheck all projects
+pnpm check            # lint + typecheck for all projects
+pnpm test:e2e         # Playwright e2e suite (web app)
 ```
 
-For language switching, the `i18n` instance also comes from `useTranslation()`:
+Project-specific commands:
 
-```tsx
-const { i18n } = useTranslation();
-void i18n.changeLanguage("zh-CN");
+```bash
+pnpm exec nx run web:build
+pnpm exec nx run admin:serve
+pnpm exec nx show projects
+pnpm exec nx graph     # visualize the dependency graph
 ```
 
-`languageOptions`, `normalizeLanguage`, `getLanguageDirection`, and `fallbackLng` can be imported from `@/i18n/config` (re-exports from `util.ts`).
+> Nx 23 infers targets from each package's `package.json` scripts and config files, so `typecheck`, `lint`, `build`, and `serve` targets exist automatically per project.
 
-### Adding a language
+### Adding code to a shared library
 
-1. Add an entry under `languages` in `i18n.config.json` with `code`, `label`, `detect`, `dir`.
-2. Create `public/locales/{code}.json` with the same key set as `public/locales/{fallbackLng}.json`.
-3. Translate values, preserving any `{{variables}}` and `<tag>...</tag>` structures.
+1. Add/modify the source under the library's `src/` (e.g. `libs/shared/ui/src/…`).
+2. Re-export new public API from the library's `src/index.ts`.
+3. Import it in apps via the package name (e.g. `import { cn } from "@housemates/shared-utils"`). Vite aliases (in `apps/web/vite.config.ts` and `apps/admin/vite.config.ts`) map each package name to its `src/` directory, so no build step is required for the libs.
 
-### Adding a translation key
+---
 
-1. Add the key to `public/locales/{fallbackLng}.json` first.
-2. Add the same key to every other locale file with its translated value.
-3. Use it via `t("group.key")` in components.
+## Supabase
 
-### Backend handoff (temporary in-repo files)
-
-The following files are **temporary copies kept in the repo only until backend integration is complete**. The backend will eventually own validation, statistics, completion-rate dashboards, scan-for-new-strings, and auto-translate. After that integration lands, these files (and the corresponding `package.json` scripts) will be removed:
-
-- `scripts/check-i18n.mjs`, `scripts/scan-i18n.mjs`, `scripts/i18n-utils.mjs`, `scripts/i18n-source-usage.mjs`
-- `i18n.scan.json`
-- `reports/i18n/`
-- `docs/i18n-agent-spec.md`, `docs/i18n-contract.md`
-- `package.json` scripts: `i18n:check`, `i18n:scan`, and the `check` aggregate
-
-Until removed, you can still run `pnpm i18n:check` and `pnpm i18n:scan` locally; the canonical computation is the backend's responsibility.
+- Schema and RLS live as plain SQL migrations in `supabase/migrations/` (applied to Supabase directly; the `supabase` CLI is not wired in).
+- Migrations are prefixed with the date (e.g. `migration_20260816_admin_access`) and are additive.
+- RLS conventions:
+  - Regular users manage their own rows only (`auth.uid() = …`).
+  - Admins are `profiles.is_admin = true`; admin policies mirror the `reports_admin_*` pattern.
+  - The `protect_admin_fields` trigger prevents non-admin users from self-elevating or toggling their own suspension.
+- The admin app signs in with a normal Supabase user; admin capabilities come purely from RLS policies plus UI gating (`AdminGuard` in `apps/admin`).
 
 ---
 
 ## Tech stack
 
-This project uses:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Build/workspace**: pnpm workspaces + Nx 23
+- **Apps**: Vite 7, React 18, TypeScript
+- **UI**: Tailwind CSS, shadcn-ui components, Radix primitives, lucide-react, recharts (admin)
+- **State/data**: Zustand (web), @supabase/supabase-js
+- **i18n**: i18next / react-i18next / i18next-http-backend (web app only)
+- **Tests**: Playwright (web e2e)
 
 ---
 
 ## Deployment
 
-To deploy, open your Enter.pro project and click "Publish"
-
-Your app will automatically build and go live at your production URL.
-
----
-
-✨ Keep prompting, keep building — Enter.pro handles the rest.
+- **Web app**: deploy `apps/web` (Vite static build). Enter.pro handles the build + publish for the linked project.
+- **Admin app**: deploy `apps/admin` behind admin-only auth; every data mutation is additionally protected by RLS.
+- Apply `supabase/migrations/*` to the target Supabase project before/after releasing (they are additive).
