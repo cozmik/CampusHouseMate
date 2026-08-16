@@ -21,6 +21,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <Link to="/post" className="text-muted-foreground hover:text-foreground">Post a space</Link>
             <Link to="/login" className="text-muted-foreground hover:text-foreground">Log in</Link>
             <Link to="/signup" className="text-muted-foreground hover:text-foreground">Sign up</Link>
+            <Link to="/terms" className="text-muted-foreground hover:text-foreground">Terms</Link>
+            <Link to="/privacy" className="text-muted-foreground hover:text-foreground">Privacy</Link>
           </nav>
         </div>
       </footer>

@@ -189,6 +189,24 @@ export function DocumentSeo() {
       return;
     }
 
+    if (pathname === "/terms") {
+      applySeo({
+        title: withSuffix("Terms and Conditions"),
+        description: "The terms that govern your use of Housemates Finder — the free student hostel handover marketplace for Nigerian campuses.",
+        path: pathname,
+      });
+      return;
+    }
+
+    if (pathname === "/privacy") {
+      applySeo({
+        title: withSuffix("Privacy Policy"),
+        description: "How Housemates Finder collects, uses, and protects your personal information.",
+        path: pathname,
+      });
+      return;
+    }
+
     applySeo({
       title: withSuffix("Page not found"),
       description: "This page does not exist on Housemates Finder.",

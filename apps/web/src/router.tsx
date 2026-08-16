@@ -16,6 +16,8 @@ import VerifyEmail from "./pages/VerifyEmail";
 import AuthCallback from "./pages/AuthCallback";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import { AppLayout } from "@/components/housemate/AppLayout";
 import { AdminLayout } from "@/components/housemate/AdminLayout";
 import { ProtectedRoute } from "@/components/housemate/ProtectedRoute";
@@ -28,6 +30,8 @@ export const routers = [
   { path: "/reset-password", name: "reset-password", element: <ResetPassword /> },
   { path: "/auth/callback", name: "auth-callback", element: <AuthCallback /> },
   { path: "/verify-email", name: "verify-email", element: <AppLayout><VerifyEmail /></AppLayout> },
+  { path: "/terms", name: "terms", element: <AppLayout><Terms /></AppLayout> },
+  { path: "/privacy", name: "privacy", element: <AppLayout><Privacy /></AppLayout> },
   { path: "/", name: "home", element: <AppLayout><Index /></AppLayout> },
   { path: "/browse", name: "browse", element: <AppLayout><Browse /></AppLayout> },
   { path: "/listings/:id", name: "listing", element: <AppLayout><ListingDetail /></AppLayout> },

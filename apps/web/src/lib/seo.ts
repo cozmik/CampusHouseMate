@@ -12,8 +12,10 @@ export const DEFAULT_TITLE = "Housemates Finder — Find student hostels in Nige
 export const DEFAULT_DESCRIPTION =
   "Find or hand over a student hostel near Nigerian campuses. Search by school or area, chat privately — free, no in-app payments.";
 
-export const DEFAULT_IMAGE =
-  "https://cdn.enter.pro/resources/uid_100410371/65a6740a-a333-4a.png";
+export const DEFAULT_IMAGE = `${siteOrigin()}/og.png`;
+
+export const DEFAULT_IMAGE_WIDTH = "644";
+export const DEFAULT_IMAGE_HEIGHT = "645";
 
 export const TITLE_SUFFIX = "Housemates Finder";
 
@@ -88,6 +90,9 @@ export function applySeo({
   upsertMeta('meta[property="og:description"]', { property: "og:description", content: description });
   upsertMeta('meta[property="og:url"]', { property: "og:url", content: url });
   upsertMeta('meta[property="og:image"]', { property: "og:image", content: image });
+  upsertMeta('meta[property="og:image:width"]', { property: "og:image:width", content: DEFAULT_IMAGE_WIDTH });
+  upsertMeta('meta[property="og:image:height"]', { property: "og:image:height", content: DEFAULT_IMAGE_HEIGHT });
+  upsertMeta('meta[property="og:image:alt"]', { property: "og:image:alt", content: SITE_NAME });
   upsertMeta('meta[property="og:type"]', { property: "og:type", content: type });
   upsertMeta('meta[property="og:site_name"]', { property: "og:site_name", content: SITE_NAME });
   upsertMeta('meta[property="og:locale"]', { property: "og:locale", content: "en_NG" });

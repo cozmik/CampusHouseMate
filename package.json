@@ -6,6 +6,7 @@
   "scripts": {
     "build": "nx run-many -t build",
     "build:web": "nx build web",
+    "build:web:seo": "nx build web && node apps/web/scripts/prerender.mjs",
     "build:admin": "nx build admin",
     "dev": "nx serve web",
     "dev:web": "nx serve web",
