@@ -569,6 +569,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     if (error) return { ok: false, error: error.message };
     if (!data.user) return { ok: false, error: "Could not create account." };
+    if (!data.session) {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: input.email.trim(),
+        password: input.password,
+      });
+      if (signInError) return { ok: false, error: signInError.message };
+    }
     return { ok: true };
   }, []);
 

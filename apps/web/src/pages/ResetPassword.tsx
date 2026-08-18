@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Loader2, Lock } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { supabase } from "@housemates/shared-supabase";
 import { useApp } from "@/lib/store";
 import { Button } from "@housemates/shared-ui/button";
-import { Input } from "@housemates/shared-ui/input";
 import { Label } from "@housemates/shared-ui/label";
 import { Logo } from "@/components/housemate/Logo";
+import { PasswordField } from "@/components/housemate/PasswordField";
 
 export default function ResetPassword() {
   const { updatePassword } = useApp();
@@ -95,17 +95,23 @@ export default function ResetPassword() {
               <form onSubmit={onSubmit} className="mt-7 space-y-5">
                 <div className="space-y-1.5">
                   <Label htmlFor="password">New password</Label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="password" type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="pl-9" />
-                  </div>
+                  <PasswordField
+                    id="password"
+                    autoComplete="new-password"
+                    required
+                    value={password}
+                    onChange={setPassword}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="confirm">Confirm password</Label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="confirm" type="password" autoComplete="new-password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} className="pl-9" />
-                  </div>
+                  <PasswordField
+                    id="confirm"
+                    autoComplete="new-password"
+                    required
+                    value={confirm}
+                    onChange={setConfirm}
+                  />
                 </div>
                 {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
                 <Button type="submit" className="w-full bg-gradient-primary shadow-glow" disabled={loading}>

@@ -3653,18 +3653,24 @@ export type Database = {
       }
       schools: {
         Row: {
+          acronym: string | null
+          aliases: string[]
           id: string
           name: string
           state: string
           type: string
         }
         Insert: {
+          acronym?: string | null
+          aliases?: string[]
           id: string
           name: string
           state: string
           type?: string
         }
         Update: {
+          acronym?: string | null
+          aliases?: string[]
           id?: string
           name?: string
           state?: string

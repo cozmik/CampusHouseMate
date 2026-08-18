@@ -1,0 +1,27 @@
+-- Confirming email is optional in the product. Supabase "Confirm email" still
+-- blocks sign-in until email_confirmed_at is set. Auto-confirm on insert so
+-- signUp returns a session, and backfill anyone already stuck.
+
+create or replace function public.auto_confirm_user_email()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.email is not null and new.email_confirmed_at is null then
+    new.email_confirmed_at := now();
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created_auto_confirm on auth.users;
+create trigger on_auth_user_created_auto_confirm
+before insert on auth.users
+for each row execute function public.auto_confirm_user_email();
+
+update auth.users
+set email_confirmed_at = now()
+where email is not null
+  and email_confirmed_at is null;

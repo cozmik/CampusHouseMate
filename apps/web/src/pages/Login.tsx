@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Mail, Lock, ArrowRight } from "lucide-react";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Mail, ArrowRight } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { Button } from "@housemates/shared-ui/button";
 import { Input } from "@housemates/shared-ui/input";
 import { Label } from "@housemates/shared-ui/label";
 import { Logo } from "@/components/housemate/Logo";
+import { PasswordField } from "@/components/housemate/PasswordField";
 import { SocialAuth } from "@/components/housemate/SocialAuth";
 
 export default function Login() {
-  const { login, resendEmailVerification } = useApp();
+  const { login, currentUser } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? "/dashboard";
@@ -17,14 +18,11 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [needsVerification, setNeedsVerification] = useState(false);
-  const [resending, setResending] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setNeedsVerification(false);
     setLoading(true);
     const trimmedEmail = email.trim();
     const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
@@ -41,21 +39,18 @@ export default function Login() {
       return;
     }
 
-    const msg = (res.error ?? "").toString();
-    setError(res.error ?? "Could not log in.");
+    const msg = (res.error ?? "Could not log in.").toString();
     const lower = msg.toLowerCase();
-    setNeedsVerification(
-      lower.includes("confirm") || lower.includes("verification") || lower.includes("verified"),
-    );
+    if (lower.includes("confirm") || lower.includes("not confirmed") || lower.includes("verification")) {
+      setError("Couldn't start a session. Confirming your email is optional — try again in a moment.");
+      return;
+    }
+    setError(msg);
   };
 
-  const onResend = async () => {
-    setResending(true);
-    const res = await resendEmailVerification(email);
-    setResending(false);
-    if (res.ok) navigate(`/verify-email?email=${encodeURIComponent(email.trim())}`, { replace: true });
-    else setError(res.error ?? "Could not send the confirmation link.");
-  };
+  if (currentUser) {
+    return <Navigate to={from} replace />;
+  }
 
   return (
     <div className="relative grid min-h-screen place-items-center overflow-hidden bg-hero px-4 py-10">
@@ -81,39 +76,16 @@ export default function Login() {
                   Forgot password?
                 </Link>
               </div>
-              <div className="relative">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="pl-9" />
-              </div>
+              <PasswordField
+                id="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={setPassword}
+                placeholder="••••••••"
+              />
             </div>
             {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
-            {needsVerification && (
-              <div className="rounded-lg bg-muted/30 px-3 py-3 text-sm">
-                <p className="text-muted-foreground">
-                  Your account still needs a confirmed email before you can log in. Check your inbox for the link we sent at signup, or request a new one below.
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="mt-3 w-full"
-                  onClick={() => void onResend()}
-                  disabled={resending}
-                >
-                  {resending ? "Sending…" : "Send confirmation link"}
-                </Button>
-                <p className="mt-2 text-center text-xs text-muted-foreground">
-                  Need help?{" "}
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="h-auto p-0 text-xs"
-                    onClick={() => navigate(`/verify-email?email=${encodeURIComponent(email.trim())}`)}
-                  >
-                    Open email confirmation page
-                  </Button>
-                </p>
-              </div>
-            )}
             <Button type="submit" className="w-full bg-gradient-primary shadow-glow" disabled={loading}>
               {loading ? "Logging in…" : "Log in"}<ArrowRight className="h-4 w-4" />
             </Button>

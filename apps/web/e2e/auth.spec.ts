@@ -6,7 +6,8 @@ test.describe("Auth and navigation", () => {
     await page.goto("/login");
     await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
     await expect(page.getByLabel("Email")).toBeVisible();
-    await expect(page.getByLabel("Password")).toBeVisible();
+    await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Show password" })).toBeVisible();
     await expect(page.getByRole("button", { name: /continue with google/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /facebook/i })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Forgot password?" })).toBeVisible();
@@ -16,7 +17,7 @@ test.describe("Auth and navigation", () => {
   test("rejects an invalid email without submitting", async ({ page }) => {
     await page.goto("/login");
     await page.getByLabel("Email").fill("foo@bar");
-    await page.getByLabel("Password").fill("password123");
+    await page.getByLabel("Password", { exact: true }).fill("password123");
     await page.getByRole("button", { name: "Log in" }).click();
     await expect(page.getByText("Please enter a valid email address.")).toBeVisible();
     await expect(page).toHaveURL(/\/login/);
@@ -25,10 +26,22 @@ test.describe("Auth and navigation", () => {
   test("logs in and lands on the dashboard", async ({ page }) => {
     await page.goto("/login");
     await page.getByLabel("Email").fill(TEST_USER.email);
-    await page.getByLabel("Password").fill(TEST_USER.password);
+    await page.getByLabel("Password", { exact: true }).fill(TEST_USER.password);
     await page.getByRole("button", { name: "Log in" }).click();
     await expect(page).toHaveURL(/\/dashboard/);
     await expect(page.getByRole("heading", { name: TEST_USER.fullName })).toBeVisible();
+  });
+
+  test("can reveal the password being entered", async ({ page }) => {
+    await page.goto("/login");
+    const password = page.getByLabel("Password", { exact: true });
+    await password.fill("secret123");
+    await expect(password).toHaveAttribute("type", "password");
+    await page.getByRole("button", { name: "Show password" }).click();
+    await expect(password).toHaveAttribute("type", "text");
+    await expect(password).toHaveValue("secret123");
+    await page.getByRole("button", { name: "Hide password" }).click();
+    await expect(password).toHaveAttribute("type", "password");
   });
 
   test("signup collects first and last name and school acronym search", async ({ page }) => {
@@ -41,6 +54,18 @@ test.describe("Auth and navigation", () => {
     await expect(option.getByText("UI", { exact: true })).toBeVisible();
   });
 
+  test("signup lands on the dashboard with a welcome notification", async ({ page }) => {
+    await page.goto("/signup");
+    await page.getByLabel("First name").fill(TEST_USER.firstName);
+    await page.getByLabel("Last name").fill(TEST_USER.lastName);
+    await page.getByLabel("Email").fill("new@housemate.test");
+    await page.getByLabel("Password", { exact: true }).fill("password123");
+    await page.getByRole("button", { name: "Create account" }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page.getByText("Welcome to Housemates Finder")).toBeVisible();
+    await expect(page.getByRole("heading", { name: TEST_USER.fullName })).toBeVisible();
+  });
+
   test("forgot-password sends a reset link", async ({ page }) => {
     await page.goto("/forgot-password");
     await page.getByLabel("Email").fill(TEST_USER.email);
@@ -51,7 +76,7 @@ test.describe("Auth and navigation", () => {
   test("guest header hides Messages and protected routes redirect to login", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("navigation").getByRole("link", { name: "Messages" })).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "Browse" })).toBeVisible();
+    await expect(page.getByRole("navigation").getByRole("link", { name: "Browse", exact: true })).toBeVisible();
 
     await page.goto("/dashboard");
     await expect(page).toHaveURL(/\/login/);

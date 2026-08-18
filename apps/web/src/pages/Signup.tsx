@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, User as UserIcon, Phone, ArrowRight } from "lucide-react";
+import { Mail, User as UserIcon, Phone, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 import { useApp } from "@/lib/store";
 import { Button } from "@housemates/shared-ui/button";
 import { Input } from "@housemates/shared-ui/input";
 import { Label } from "@housemates/shared-ui/label";
 import { Logo } from "@/components/housemate/Logo";
+import { PasswordField } from "@/components/housemate/PasswordField";
 import { SchoolCombobox } from "@/components/housemate/SchoolCombobox";
 import { SocialAuth } from "@/components/housemate/SocialAuth";
 
@@ -35,10 +37,17 @@ export default function Signup() {
     const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
     if (!okEmail) { setError("Please enter a valid email address."); return; }
     setLoading(true);
-    const res = await signup({ firstName: firstName.trim(), lastName: lastName.trim(), email: trimmedEmail, password, phone, whatsapp, schoolId });
+    const trimmedFirst = firstName.trim();
+    const res = await signup({ firstName: trimmedFirst, lastName: lastName.trim(), email: trimmedEmail, password, phone, whatsapp, schoolId });
     setLoading(false);
-    if (res.ok) navigate("/dashboard", { replace: true });
-    else setError(res.error ?? "Could not create account.");
+    if (res.ok) {
+      toast.success("Welcome to Housemates Finder", {
+        description: `Hey ${trimmedFirst}, you're in. Confirming your email is optional but recommended.`,
+      });
+      navigate("/dashboard", { replace: true });
+    } else {
+      setError(res.error ?? "Could not create account.");
+    }
   };
 
   return (
@@ -73,10 +82,14 @@ export default function Signup() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="password" type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" className="pl-9" />
-              </div>
+              <PasswordField
+                id="password"
+                autoComplete="new-password"
+                required
+                value={password}
+                onChange={setPassword}
+                placeholder="At least 6 characters"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>School</Label>

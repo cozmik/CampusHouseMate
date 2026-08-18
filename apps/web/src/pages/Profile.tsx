@@ -9,6 +9,7 @@ import { Label } from "@housemates/shared-ui/label";
 import { Textarea } from "@housemates/shared-ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@housemates/shared-ui/avatar";
 import { SchoolCombobox } from "@/components/housemate/SchoolCombobox";
+import { PasswordField } from "@/components/housemate/PasswordField";
 import { ReportDialog } from "@/components/housemate/ReportDialog";
 import { initials, joinName, splitFullName } from "@housemates/shared-utils";
 
@@ -177,16 +178,34 @@ export default function Profile() {
           {hasPassword && (
             <div className="space-y-1.5">
               <Label htmlFor="currentPassword">Current password</Label>
-              <Input id="currentPassword" type="password" autoComplete="current-password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+              <PasswordField
+                id="currentPassword"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={setCurrentPassword}
+                showLock={false}
+              />
             </div>
           )}
           <div className="space-y-1.5">
             <Label htmlFor="newPassword">New password</Label>
-            <Input id="newPassword" type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+            <PasswordField
+              id="newPassword"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={setNewPassword}
+              showLock={false}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="confirmPassword">Confirm new password</Label>
-            <Input id="confirmPassword" type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+            <PasswordField
+              id="confirmPassword"
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              showLock={false}
+            />
           </div>
         </div>
         <div className="flex justify-end">
