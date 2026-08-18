@@ -15,7 +15,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
   if (!currentUser) {
     return (
-      <Navigate to="/login" replace state={{ from: location.pathname }} />
+      <Navigate to="/login" replace state={{ from: location.pathname, welcome: (location.state as { welcome?: boolean } | null)?.welcome }} />
     );
   }
   return <>{children}</>;

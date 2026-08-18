@@ -13,8 +13,9 @@ export default function Login() {
   const { login, currentUser } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string; email?: string } | null)?.from ?? "/dashboard";
+  const from = (location.state as { from?: string; email?: string; welcome?: boolean } | null)?.from ?? "/dashboard";
   const prefillEmail = (location.state as { email?: string } | null)?.email ?? "";
+  const welcome = Boolean((location.state as { welcome?: boolean } | null)?.welcome);
 
   const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState("");
@@ -36,7 +37,7 @@ export default function Login() {
     const res = await login(trimmedEmail, password);
     setLoading(false);
     if (res.ok) {
-      navigate(from, { replace: true });
+      navigate(from, { replace: true, state: welcome ? { welcome: true } : undefined });
       return;
     }
 
@@ -50,7 +51,7 @@ export default function Login() {
   };
 
   if (currentUser) {
-    return <Navigate to={from} replace />;
+    return <Navigate to={from} replace state={welcome ? { welcome: true } : undefined} />;
   }
 
   return (

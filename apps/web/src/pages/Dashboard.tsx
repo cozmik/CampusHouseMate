@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Plus, Heart, MessageSquare, BedDouble, Search, ExternalLink, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useApp } from "@/lib/store";
 import { Button } from "@housemates/shared-ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@housemates/shared-ui/avatar";
@@ -16,8 +17,37 @@ const STATUS_OPTIONS: ListingStatus[] = ["available", "pending", "taken"];
 
 export default function Dashboard() {
   const { currentUser, listings, fetchListings, getMyConversations, getSavedListings, savedListings } = useApp();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [loadingMine, setLoadingMine] = useState(true);
   const [loadingSaved, setLoadingSaved] = useState(true);
+  const [welcomeName, setWelcomeName] = useState<string | null>(null);
+  const welcomed = useRef(false);
+
+  useEffect(() => {
+    if (!currentUser || welcomed.current) return;
+    let stored: string | null = null;
+    try {
+      stored = sessionStorage.getItem("hmf.welcome");
+    } catch {
+      stored = null;
+    }
+    const fromState = Boolean((location.state as { welcome?: boolean } | null)?.welcome);
+    if (!stored && !fromState) return;
+    welcomed.current = true;
+    const name = stored || currentUser.firstName || "there";
+    try {
+      sessionStorage.removeItem("hmf.welcome");
+    } catch {
+      /* ignore */
+    }
+    setWelcomeName(name);
+    toast.success("Welcome to Housemates Finder", {
+      description: `Hey ${name}, you're in. Confirming your email is optional but recommended.`,
+      duration: 8000,
+    });
+    if (fromState) navigate(".", { replace: true, state: {} });
+  }, [currentUser, location.state, navigate]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -60,6 +90,14 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      {welcomeName && (
+        <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 sm:px-5 sm:py-4">
+          <p className="font-semibold text-foreground">Welcome to Housemates Finder</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Hey {welcomeName}, you're in. Confirming your email is optional but recommended.
+          </p>
+        </div>
+      )}
       <div className="mb-8 flex items-center gap-4 sm:mb-10">
         <Avatar className="h-14 w-14">
           <AvatarImage src={currentUser.avatarUrl} alt={currentUser.fullName} />

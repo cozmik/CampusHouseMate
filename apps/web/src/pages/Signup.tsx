@@ -41,11 +41,10 @@ export default function Signup() {
     const res = await signup({ firstName: trimmedFirst, lastName: lastName.trim(), email: trimmedEmail, password, phone, whatsapp, schoolId });
     setLoading(false);
     if (res.ok) {
-      toast.success("Welcome to Housemates Finder", {
-        description: `Hey ${trimmedFirst}, you're in. Confirming your email is optional but recommended.`,
-      });
-      navigate("/dashboard", { replace: true });
+      sessionStorage.setItem("hmf.welcome", trimmedFirst);
+      navigate("/dashboard", { replace: true, state: { welcome: true } });
     } else if (res.created) {
+      sessionStorage.setItem("hmf.welcome", trimmedFirst);
       toast.success("Account created", {
         description: "Log in with the same email and password to continue.",
       });
