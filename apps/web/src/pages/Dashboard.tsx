@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Plus, Heart, MessageSquare, BedDouble, Search, ExternalLink, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Plus, Heart, MessageSquare, BedDouble, Search, ExternalLink, Loader2, Sparkles, ArrowRight } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { Button } from "@housemates/shared-ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@housemates/shared-ui/avatar";
@@ -42,10 +41,6 @@ export default function Dashboard() {
       /* ignore */
     }
     setWelcomeName(name);
-    toast.success("Welcome to Housemates Finder", {
-      description: `Hey ${name}, you're in. Confirming your email is optional but recommended.`,
-      duration: 8000,
-    });
     if (fromState) navigate(".", { replace: true, state: {} });
   }, [currentUser, location.state, navigate]);
 
@@ -87,16 +82,12 @@ export default function Dashboard() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const myInterests = getMyConversations().filter((c) => c.seekerId === currentUser.id);
   const saved = getSavedListings();
+  const firstName = welcomeName || currentUser.firstName || currentUser.fullName.split(" ")[0];
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
       {welcomeName && (
-        <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 sm:px-5 sm:py-4">
-          <p className="font-semibold text-foreground">Welcome to Housemates Finder</p>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Hey {welcomeName}, you're in. Confirming your email is optional but recommended.
-          </p>
-        </div>
+        <DashboardNotice firstName={firstName} />
       )}
       <div className="mb-8 flex items-center gap-4 sm:mb-10">
         <Avatar className="h-14 w-14">
@@ -146,6 +137,31 @@ export default function Dashboard() {
           )}
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function DashboardNotice({ firstName }: { firstName: string }) {
+  return (
+    <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-primary p-6 text-primary-foreground shadow-elevated sm:p-8">
+      <div className="pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full bg-white/15 blur-2xl" />
+      <div className="pointer-events-none absolute -bottom-12 -left-6 h-32 w-32 rounded-full bg-black/10 blur-2xl" />
+      <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-4">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/20">
+            <Sparkles className="h-6 w-6" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-xl font-bold sm:text-2xl">Welcome to Housemates Finder</p>
+            <p className="mt-1 text-sm text-primary-foreground/90 sm:text-base">
+              Hey {firstName}, you're in. Post a space or browse hostels near your campus whenever you're ready.
+            </p>
+          </div>
+        </div>
+        <Button asChild size="lg" variant="secondary" className="shrink-0 bg-background text-foreground hover:bg-background/90">
+          <Link to="/browse">Browse spaces<ArrowRight className="h-4 w-4" /></Link>
+        </Button>
+      </div>
     </div>
   );
 }
