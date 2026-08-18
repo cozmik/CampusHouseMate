@@ -24,20 +24,29 @@ export default function Browse() {
   const q = params.get("q") ?? "";
   const page = Math.max(1, Number(params.get("page") ?? "1") || 1);
   const roomsParam = params.get("rooms") ?? "";
-  const roomTypes = roomsParam.split(",").filter(Boolean) as RoomType[];
+  const roomTypes = useMemo(
+    () => roomsParam.split(",").filter(Boolean) as RoomType[],
+    [roomsParam],
+  );
   const gender = (params.get("gender") as GenderPreference | null) ?? "any";
   const pricePeriod = (params.get("period") as PricePeriod | null) ?? "any";
   const maxPrice = params.get("maxPrice") ? Number(params.get("maxPrice")) : undefined;
   const statusParam = params.get("status");
   const status: ListingStatus | "any" = statusParam === null ? "available" : statusParam === "all" ? "any" : (statusParam as ListingStatus);
   const savedOnly = params.get("saved") === "1";
+  const savedIdsKey = savedOnly
+    ? savedListings.map((s) => s.listingId).sort().join(",")
+    : "";
 
   const [qInput, setQInput] = useState(q);
   useEffect(() => {
     setQInput(q);
   }, [q]);
 
-  const filterValue: FilterValue = { roomTypes, gender, pricePeriod, maxPrice, status, savedOnly };
+  const filterValue: FilterValue = useMemo(
+    () => ({ roomTypes, gender, pricePeriod, maxPrice, status, savedOnly }),
+    [roomTypes, gender, pricePeriod, maxPrice, status, savedOnly],
+  );
 
   const setParamsResetPage = (next: URLSearchParams) => {
     next.delete("page");
@@ -118,7 +127,7 @@ export default function Browse() {
     return () => {
       cancelled = true;
     };
-  }, [authReady, fetchListings, filters, page, savedOnly, savedListings]);
+  }, [authReady, fetchListings, filters, page, savedOnly, savedIdsKey]);
 
   const school = schoolId ? getSchool(schoolId) : undefined;
   const hasContext = Boolean(schoolId || state || lga || q);
