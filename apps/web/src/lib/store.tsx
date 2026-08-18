@@ -66,7 +66,7 @@ interface AppContextValue {
 
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   loginWithOAuth: (provider: "google" | "facebook") => Promise<{ ok: boolean; error?: string }>;
-  signup: (input: SignupInput) => Promise<{ ok: boolean; error?: string }>;
+  signup: (input: SignupInput) => Promise<{ ok: boolean; error?: string; created?: boolean }>;
   resendEmailVerification: (email?: string) => Promise<{ ok: boolean; error?: string }>;
   requestPasswordReset: (email: string) => Promise<{ ok: boolean; error?: string }>;
   updatePassword: (password: string, currentPassword?: string) => Promise<{ ok: boolean; error?: string }>;
@@ -530,7 +530,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
+      email: email.trim().toLowerCase(),
       password,
     });
     if (error) return { ok: false, error: error.message };
@@ -552,8 +552,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const firstName = input.firstName.trim();
     const lastName = input.lastName.trim();
     const fullName = joinName(firstName, lastName);
+    const email = input.email.trim().toLowerCase();
     const { data, error } = await supabase.auth.signUp({
-      email: input.email.trim(),
+      email,
       password: input.password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
@@ -569,14 +570,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     if (error) return { ok: false, error: error.message };
     if (!data.user) return { ok: false, error: "Could not create account." };
-    if (!data.session) {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: input.email.trim(),
-        password: input.password,
-      });
-      if (signInError) return { ok: false, error: signInError.message };
+    if (data.session) return { ok: true };
+
+    // Duplicate signUp returns the existing user with no identities and no session.
+    const alreadyRegistered = !data.user.identities?.length;
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password: input.password,
+    });
+    if (!signInError) return { ok: true };
+    if (alreadyRegistered) {
+      return { ok: false, error: "An account with this email already exists. Try logging in." };
     }
-    return { ok: true };
+    // User row exists (you will see it in the dashboard) but GoTrue still
+    // refuses a session while "Confirm email" is required.
+    return {
+      ok: false,
+      created: true,
+      error: "Your account was created. Log in with the same email and password.",
+    };
   }, []);
 
   const logout = useCallback(async () => {

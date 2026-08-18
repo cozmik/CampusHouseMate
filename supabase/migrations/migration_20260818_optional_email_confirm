@@ -1,6 +1,6 @@
--- Confirming email is optional in the product. Supabase "Confirm email" still
--- blocks sign-in until email_confirmed_at is set. Auto-confirm on insert so
--- signUp returns a session, and backfill anyone already stuck.
+-- Run in the Supabase SQL editor.
+-- Also turn OFF Authentication → Providers → Email → "Confirm email".
+-- Confirming stays optional in the app; this is what actually allows sign-in.
 
 create or replace function public.auto_confirm_user_email()
 returns trigger
@@ -9,8 +9,9 @@ security definer
 set search_path = ''
 as $$
 begin
-  if new.email is not null and new.email_confirmed_at is null then
-    new.email_confirmed_at := now();
+  if new.email is not null then
+    new.email_confirmed_at := coalesce(new.email_confirmed_at, now());
+    new.confirmation_token := '';
   end if;
   return new;
 end;
@@ -21,7 +22,42 @@ create trigger on_auth_user_created_auto_confirm
 before insert on auth.users
 for each row execute function public.auto_confirm_user_email();
 
+-- GoTrue may write a confirmation token after insert when "Confirm email" is on.
+-- Re-confirm so signInWithPassword works immediately after signUp.
+create or replace function public.auto_confirm_user_email_after()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.email is not null then
+    update auth.users
+    set
+      email_confirmed_at = coalesce(email_confirmed_at, now()),
+      confirmation_token = ''
+    where id = new.id
+      and (
+        email_confirmed_at is null
+        or coalesce(confirmation_token, '') <> ''
+      );
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created_auto_confirm_after on auth.users;
+create trigger on_auth_user_created_auto_confirm_after
+after insert on auth.users
+for each row execute function public.auto_confirm_user_email_after();
+
+-- Unlock anyone already stuck (including the account you just created).
 update auth.users
-set email_confirmed_at = now()
+set
+  email_confirmed_at = coalesce(email_confirmed_at, now()),
+  confirmation_token = ''
 where email is not null
-  and email_confirmed_at is null;
+  and (
+    email_confirmed_at is null
+    or coalesce(confirmation_token, '') <> ''
+  );

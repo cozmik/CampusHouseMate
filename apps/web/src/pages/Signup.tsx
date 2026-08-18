@@ -45,6 +45,11 @@ export default function Signup() {
         description: `Hey ${trimmedFirst}, you're in. Confirming your email is optional but recommended.`,
       });
       navigate("/dashboard", { replace: true });
+    } else if (res.created) {
+      toast.success("Account created", {
+        description: "Log in with the same email and password to continue.",
+      });
+      navigate("/login", { replace: true, state: { email: trimmedEmail } });
     } else {
       setError(res.error ?? "Could not create account.");
     }

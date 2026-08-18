@@ -13,9 +13,10 @@ export default function Login() {
   const { login, currentUser } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from ?? "/dashboard";
+  const from = (location.state as { from?: string; email?: string } | null)?.from ?? "/dashboard";
+  const prefillEmail = (location.state as { email?: string } | null)?.email ?? "";
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
