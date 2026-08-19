@@ -5,6 +5,8 @@ import type { RawListing } from "./data";
 export type MockOptions = {
   listings?: RawListing[];
   authenticated?: boolean;
+  conversations?: import("./data").RawConversation[];
+  savedListings?: import("./data").RawSavedListing[];
 };
 
 export const test = base.extend<{ mockOptions: MockOptions; mockApi: void }>({

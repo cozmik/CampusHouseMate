@@ -63,6 +63,44 @@ export function makeListings(count: number): RawListing[] {
   return Array.from({ length: count }, (_, i) => makeListing(i + 1));
 }
 
+export type RawConversation = {
+  id: string;
+  listing_id: string;
+  seeker_id: string;
+  lister_id: string;
+  status: string;
+  created_at: string;
+};
+
+export type RawSavedListing = {
+  id: string;
+  user_id: string;
+  listing_id: string;
+  created_at: string;
+};
+
+export type RawMessage = {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  type: string;
+  created_at: string;
+};
+
+export function makeConversation(
+  patch: Partial<RawConversation> = {},
+): RawConversation {
+  return {
+    id: patch.id ?? "conv-1",
+    listing_id: patch.listing_id ?? "listing-1",
+    seeker_id: patch.seeker_id ?? TEST_USER.id,
+    lister_id: patch.lister_id ?? OWNER_ID,
+    status: patch.status ?? "active",
+    created_at: patch.created_at ?? new Date().toISOString(),
+  };
+}
+
 export function sessionPayload(user = TEST_USER) {
   const now = Math.floor(Date.now() / 1000);
   return {

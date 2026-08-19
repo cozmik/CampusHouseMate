@@ -1,22 +1,36 @@
 import type { Page, Route } from "@playwright/test";
-import { makeListings, sessionPayload, TEST_USER, type RawListing } from "./data";
+import {
+  makeListing,
+  makeListings,
+  sessionPayload,
+  TEST_USER,
+  type RawConversation,
+  type RawListing,
+  type RawMessage,
+  type RawSavedListing,
+} from "./data";
 
 const SUPABASE_HOST = /supabase\.co/;
 
 type MockOptions = {
   listings?: RawListing[];
   authenticated?: boolean;
+  conversations?: RawConversation[];
+  savedListings?: RawSavedListing[];
 };
 
 function parseEq(value: string | null): string | undefined {
-  if (!value) return undefined;
-  if (value.startsWith("eq.")) return value.slice(3);
-  return value;
+  if (!value?.startsWith("eq.")) return undefined;
+  return value.slice(3);
 }
 
 function parseIn(value: string | null): string[] | undefined {
   if (!value?.startsWith("in.(") || !value.endsWith(")")) return undefined;
-  return value.slice(4, -1).split(",").filter(Boolean);
+  return value
+    .slice(4, -1)
+    .split(",")
+    .map((s) => s.replace(/^["']+|["']+$/g, "").trim())
+    .filter(Boolean);
 }
 
 function applyListingFilters(rows: RawListing[], url: URL): RawListing[] {
@@ -95,11 +109,35 @@ async function json(route: Route, body: unknown, extra: Record<string, string> =
 }
 
 export async function mockSupabase(page: Page, options: MockOptions = {}) {
-  const listings = options.listings ?? makeListings(6);
+  const listings = [...(options.listings ?? makeListings(6))];
   if (!Array.isArray(listings)) {
     throw new Error("mockSupabase listings must be an array");
   }
+  const conversations: RawConversation[] = [...(options.conversations ?? [])];
+  const savedListings: RawSavedListing[] = [...(options.savedListings ?? [])];
+  const messages: RawMessage[] = conversations.map((c) => ({
+    id: `msg-seed-${c.id}`,
+    conversation_id: c.id,
+    sender_id: c.seeker_id,
+    content: "You started a conversation about this listing.",
+    type: "system",
+    created_at: c.created_at,
+  }));
   const session = options.authenticated ? sessionPayload() : null;
+  let seq = 1;
+
+  function parseJson(request: { postDataJSON: () => unknown }) {
+    try {
+      return request.postDataJSON();
+    } catch {
+      return null;
+    }
+  }
+
+  function asRows<T>(body: unknown): T[] {
+    if (body == null) return [];
+    return (Array.isArray(body) ? body : [body]) as T[];
+  }
 
   if (session) {
     await page.addInitScript(
@@ -175,7 +213,7 @@ export async function mockSupabase(page: Page, options: MockOptions = {}) {
       return;
     }
 
-    if (path.startsWith("/auth/v1/user") && method === "GET") {
+    if (path.startsWith("/auth/v1/user")) {
       if (session) {
         await json(route, session.user);
         return;
@@ -204,6 +242,26 @@ export async function mockSupabase(page: Page, options: MockOptions = {}) {
     const wantsObject = accept.includes("vnd.pgrst.object+json");
 
     if (table === "listings") {
+      if (method === "POST") {
+        const payload = asRows<Partial<RawListing>>(parseJson(request))[0] ?? {};
+        const row = makeListing(seq++, {
+          ...payload,
+          id: typeof payload.id === "string" ? payload.id : `listing-created-${seq}`,
+          listing_photos: payload.listing_photos ?? [],
+        });
+        listings.unshift(row);
+        await json(route, wantsObject ? row : [row]);
+        return;
+      }
+      if (method === "PATCH") {
+        const id = parseEq(url.searchParams.get("id"));
+        const patch = asRows<Partial<RawListing>>(parseJson(request))[0] ?? {};
+        const idx = listings.findIndex((l) => l.id === id);
+        if (idx >= 0) listings[idx] = { ...listings[idx], ...patch };
+        const row = idx >= 0 ? listings[idx] : null;
+        await json(route, wantsObject ? row : row ? [row] : []);
+        return;
+      }
       const filtered = applyListingFilters(listings, url);
       const range = rangeSlice(filtered, url, request.headers()["range"]);
       const payload = wantsObject
@@ -224,12 +282,117 @@ export async function mockSupabase(page: Page, options: MockOptions = {}) {
       return;
     }
 
-    if (table === "profiles") {
+    if (table === "listing_photos") {
       if (method === "POST") {
-        await json(route, [{ id: TEST_USER.id, full_name: TEST_USER.fullName }]);
+        const rows = asRows<{ listing_id: string; url: string; position: number }>(parseJson(request)).map((p, i) => ({
+          id: `photo-${seq++}-${i}`,
+          listing_id: p.listing_id,
+          url: p.url,
+          position: p.position,
+        }));
+        const listing = listings.find((l) => l.id === rows[0]?.listing_id);
+        if (listing) listing.listing_photos = rows;
+        await json(route, wantsObject ? rows[0] : rows);
+        return;
+      }
+      await json(route, []);
+      return;
+    }
+
+    if (table === "conversations") {
+      if (method === "POST") {
+        const payload = asRows<Partial<RawConversation>>(parseJson(request))[0] ?? {};
+        const existing = conversations.find(
+          (c) => c.listing_id === payload.listing_id && c.seeker_id === payload.seeker_id,
+        );
+        const row = existing ?? {
+          id: `conv-${seq++}`,
+          listing_id: String(payload.listing_id ?? "listing-1"),
+          seeker_id: String(payload.seeker_id ?? TEST_USER.id),
+          lister_id: String(payload.lister_id ?? "user-lister-1"),
+          status: String(payload.status ?? "active"),
+          created_at: new Date().toISOString(),
+        };
+        if (!existing) conversations.unshift(row);
+        await json(route, wantsObject ? row : [row]);
+        return;
+      }
+      const seeker = parseEq(url.searchParams.get("seeker_id"));
+      const lister = parseEq(url.searchParams.get("lister_id"));
+      const or = url.searchParams.get("or") ?? "";
+      const rows = conversations.filter((c) => {
+        if (seeker && c.seeker_id !== seeker && !or.includes(c.seeker_id)) return false;
+        if (lister && c.lister_id !== lister && !or.includes(c.lister_id)) return false;
+        if (or) {
+          return or.includes(c.seeker_id) || or.includes(c.lister_id);
+        }
+        return true;
+      });
+      await json(route, wantsObject ? (rows[0] ?? null) : rows);
+      return;
+    }
+
+    if (table === "saved_listings") {
+      if (method === "POST") {
+        const payload = asRows<Partial<RawSavedListing>>(parseJson(request))[0] ?? {};
+        const row: RawSavedListing = {
+          id: `sav-${seq++}`,
+          user_id: String(payload.user_id ?? TEST_USER.id),
+          listing_id: String(payload.listing_id ?? "listing-1"),
+          created_at: new Date().toISOString(),
+        };
+        savedListings.unshift(row);
+        await json(route, wantsObject ? row : [row]);
+        return;
+      }
+      if (method === "DELETE") {
+        const id = parseEq(url.searchParams.get("id"));
+        const idx = savedListings.findIndex((s) => s.id === id);
+        if (idx >= 0) savedListings.splice(idx, 1);
+        await json(route, []);
+        return;
+      }
+      const userId = parseEq(url.searchParams.get("user_id"));
+      const rows = savedListings.filter((s) => !userId || s.user_id === userId);
+      await json(route, rows);
+      return;
+    }
+
+    if (table === "messages") {
+      if (method === "POST") {
+        const payload = asRows<Partial<RawMessage>>(parseJson(request))[0] ?? {};
+        const row: RawMessage = {
+          id: `msg-${seq++}`,
+          conversation_id: String(payload.conversation_id ?? ""),
+          sender_id: String(payload.sender_id ?? TEST_USER.id),
+          content: String(payload.content ?? ""),
+          type: String(payload.type ?? "text"),
+          created_at: new Date().toISOString(),
+        };
+        messages.push(row);
+        await json(route, wantsObject ? row : [row]);
+        return;
+      }
+      const convId = parseEq(url.searchParams.get("conversation_id"));
+      const convIds = parseIn(url.searchParams.get("conversation_id"));
+      const rows = messages.filter((m) => {
+        if (convId) return m.conversation_id === convId;
+        if (convIds) return convIds.includes(m.conversation_id);
+        return true;
+      });
+      await json(route, rows);
+      return;
+    }
+
+    if (table === "profiles") {
+      if (method === "POST" || method === "PATCH") {
+        await json(route, wantsObject
+          ? { id: TEST_USER.id, full_name: TEST_USER.fullName }
+          : [{ id: TEST_USER.id, full_name: TEST_USER.fullName }]);
         return;
       }
       const id = parseEq(url.searchParams.get("id"));
+      const ids = parseIn(url.searchParams.get("id"));
       const rows = [
         {
           id: TEST_USER.id,
@@ -249,7 +412,11 @@ export async function mockSupabase(page: Page, options: MockOptions = {}) {
           is_admin: false,
           is_suspended: false,
         },
-      ].filter((r) => !id || r.id === id);
+      ].filter((r) => {
+        if (id) return r.id === id;
+        if (ids) return ids.includes(r.id);
+        return true;
+      });
       if (wantsObject) {
         if (!rows[0]) {
           await json(route, { code: "PGRST116", message: "not found" }, {}, 406);
@@ -259,6 +426,19 @@ export async function mockSupabase(page: Page, options: MockOptions = {}) {
         return;
       }
       await json(route, rows);
+      return;
+    }
+
+    if (table === "contact_details" || table === "reports") {
+      if (method === "POST" || method === "PATCH") {
+        await json(route, wantsObject ? { id: `row-${seq++}` } : [{ id: `row-${seq++}` }]);
+        return;
+      }
+      if (wantsObject) {
+        await json(route, { code: "PGRST116", message: "not found" }, {}, 406);
+        return;
+      }
+      await json(route, []);
       return;
     }
 
