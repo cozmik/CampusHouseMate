@@ -13,6 +13,7 @@ import { mapConversation, mapListing, mapMessage, mapProfile, mapReport, type Js
 import { schools as schoolsData, getSchool as getSchoolData } from "@housemates/shared-data";
 import { toast } from "sonner";
 import { joinName, namesFromMetadata, splitFullName, uid } from "@housemates/shared-utils";
+import { captureEvent } from "@/lib/posthog";
 import type {
   Conversation,
   Listing,
@@ -534,6 +535,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       password,
     });
     if (error) return { ok: false, error: error.message };
+    captureEvent("logged_in", { method: "password" });
     return { ok: true };
   }, []);
 
@@ -545,6 +547,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
     });
     if (error) return { ok: false, error: error.message };
+    captureEvent("logged_in", { method: provider });
     return { ok: true };
   }, []);
 
@@ -570,7 +573,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     if (error) return { ok: false, error: error.message };
     if (!data.user) return { ok: false, error: "Could not create account." };
-    if (data.session) return { ok: true };
+    if (data.session) {
+      captureEvent("signed_up", { school_id: input.schoolId || undefined });
+      return { ok: true };
+    }
 
     // Duplicate signUp returns the existing user with no identities and no session.
     const alreadyRegistered = !data.user.identities?.length;
@@ -578,12 +584,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       email,
       password: input.password,
     });
-    if (!signInError) return { ok: true };
+    if (!signInError) {
+      captureEvent("signed_up", { school_id: input.schoolId || undefined });
+      return { ok: true };
+    }
     if (alreadyRegistered) {
       return { ok: false, error: "An account with this email already exists. Try logging in." };
     }
     // User row exists (you will see it in the dashboard) but GoTrue still
     // refuses a session while "Confirm email" is required.
+    captureEvent("signed_up", { school_id: input.schoolId || undefined, session: false });
     return {
       ok: false,
       created: true,
@@ -735,6 +745,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setListings((prev) => [listing, ...prev]);
       if (currentUser)
         setProfilesCache((prev) => ({ ...prev, [ownerId]: currentUser }));
+      captureEvent("listing_posted", {
+        listing_id: listing.id,
+        school_id: listing.schoolId,
+        room_type: listing.roomType,
+        price: listing.price,
+        price_period: listing.pricePeriod,
+        state: listing.state,
+      });
       return listing;
     },
     [currentUser],
@@ -842,6 +860,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         prev.some((c) => c.id === conv.id) ? prev : [conv, ...prev],
       );
       if (!existed) {
+        captureEvent("interest_expressed", {
+          listing_id: listingId,
+          conversation_id: conv.id,
+        });
         await supabase.from("messages").insert({
           conversation_id: conv.id,
           sender_id: currentUser.id,
@@ -1036,6 +1058,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (existing) {
         setSavedListings((prev) => prev.filter((s) => s.id !== existing.id));
         await supabase.from("saved_listings").delete().eq("id", existing.id);
+        captureEvent("listing_unsaved", { listing_id: listingId });
       } else {
         const tempId = uid("sav");
         const optimistic: SavedListing = {
@@ -1045,6 +1068,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           createdAt: new Date().toISOString(),
         };
         setSavedListings((prev) => [optimistic, ...prev]);
+        captureEvent("listing_saved", { listing_id: listingId });
         const { data, error } = await supabase
           .from("saved_listings")
           .insert({ user_id: currentUser.id, listing_id: listingId })

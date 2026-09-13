@@ -68,8 +68,11 @@ const Privacy = () => {
               intended by the service.
             </>,
             <>
-              We may share data with trusted service providers (for example, hosting and analytics)
-              who process it on our behalf under strict confidentiality obligations.
+              We may share data with trusted service providers (for example, hosting and{" "}
+              <a href="https://posthog.com/privacy" className="text-teal-700 underline underline-offset-2">
+                PostHog
+              </a>{" "}
+              analytics) who process it on our behalf under strict confidentiality obligations.
             </>,
             <>
               We may disclose information where required by law, legal process, or a valid request
@@ -83,9 +86,10 @@ const Privacy = () => {
       <LegalSection title="5. Cookies and local storage">
         <p>
           We use cookies and similar local-storage technologies to keep you signed in, remember your
-          preferences, and understand how the platform is used. You can adjust your browser
-          settings to refuse cookies, but some parts of the platform may not function properly
-          without them.
+          preferences, and understand how the platform is used. Product analytics are provided by
+          PostHog (page views, clicks, and events such as sign-up, posting a space, and expressing
+          interest). You can adjust your browser settings to refuse cookies, but some parts of the
+          platform may not function properly without them.
         </p>
       </LegalSection>
 

@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Heart, MapPin, CalendarDays, BedDouble, Users, MessageSquare, ShieldCheck, Sparkles, Check, Clock, Flag, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/lib/store";
+import { captureEvent } from "@/lib/posthog";
 import { Button } from "@housemates/shared-ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@housemates/shared-ui/avatar";
 import { PhotoGallery } from "@/components/housemate/PhotoGallery";
@@ -33,6 +34,16 @@ export default function ListingDetail() {
       cancelled = true;
     };
   }, [id, listing, fetchListingById]);
+
+  useEffect(() => {
+    if (!listing) return;
+    captureEvent("listing_viewed", {
+      listing_id: listing.id,
+      school_id: listing.schoolId,
+      status: listing.status,
+      price: listing.price,
+    });
+  }, [listing?.id]);
 
   if (!listing && !missing) {
     return (

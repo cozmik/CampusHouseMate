@@ -3,5 +3,6 @@ packages:
   - libs/shared/*
 
 allowBuilds:
+  core-js: true
   esbuild: true
   nx: true
