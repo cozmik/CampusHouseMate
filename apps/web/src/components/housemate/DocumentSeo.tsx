@@ -7,6 +7,7 @@ import {
   DEFAULT_DESCRIPTION,
   DEFAULT_TITLE,
   isPrivatePath,
+  INSTAGRAM_URL,
   SITE_NAME,
   siteOrigin,
   withSuffix,
@@ -80,6 +81,7 @@ export function DocumentSeo() {
             url: siteOrigin(),
             logo: `${siteOrigin()}/web-app-manifest-512x512.png`,
             description: "Student hostel handover marketplace for Nigerian campuses.",
+            sameAs: [INSTAGRAM_URL],
           },
         ],
       });

@@ -9,6 +9,10 @@ test.describe("Home", () => {
     await expect(page.getByRole("heading", { name: "Trending schools" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "How Housemates Finder works" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Fresh on the block" })).toBeVisible();
+    await expect(page.getByRole("contentinfo").getByRole("link", { name: "Instagram" })).toHaveAttribute(
+      "href",
+      "https://www.instagram.com/housematesfinder",
+    );
   });
 
   test("shows recent listings from the server", async ({ page }) => {

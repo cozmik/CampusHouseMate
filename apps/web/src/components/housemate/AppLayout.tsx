@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowRight, Mail } from "lucide-react";
+import { ArrowRight, Instagram, Mail } from "lucide-react";
 import { Button } from "@housemates/shared-ui/button";
 import { useApp } from "@/lib/store";
+import { INSTAGRAM_URL } from "@/lib/seo";
 import { AppHeader } from "./AppHeader";
 import { BottomNav } from "./BottomNav";
 
@@ -40,11 +41,20 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <main className="flex-1">{children}</main>
       <footer className="border-t border-border bg-secondary/20">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-start sm:justify-between sm:px-6 lg:px-8">
-          <div className="max-w-sm space-y-2">
+          <div className="max-w-sm space-y-3">
             <p className="text-sm font-semibold">Housemates Finder</p>
             <p className="text-sm text-muted-foreground">
               Find and hand over student hostels near Nigerian campuses. Free to use — no payments in the app.
             </p>
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <Instagram className="h-4 w-4" />
+              Instagram
+            </a>
           </div>
           <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <Link to="/browse" className="text-muted-foreground hover:text-foreground">Browse spaces</Link>

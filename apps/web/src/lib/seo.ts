@@ -1,4 +1,5 @@
 export const SITE_NAME = "Housemates Finder";
+export const INSTAGRAM_URL = "https://www.instagram.com/housematesfinder";
 
 export function siteOrigin() {
   const fromEnv = import.meta.env.VITE_SITE_URL?.replace(/\/$/, "");
