@@ -1,0 +1,172 @@
+-- Seed public.schools from the app school list (including acronyms/aliases)
+-- and ignore unknown school_ids on signup.
+-- Paste this into the Supabase SQL editor and run it.
+
+alter table public.schools add column if not exists acronym text;
+alter table public.schools add column if not exists aliases text[] not null default '{}';
+
+insert into public.schools (id, name, state, type, acronym, aliases)
+values
+  ('university-of-lagos', 'University of Lagos', 'Lagos', 'university', 'UNILAG', '{}'::text[]),
+  ('university-of-ibadan', 'University of Ibadan', 'Oyo', 'university', 'UI', '{}'::text[]),
+  ('obafemi-awolowo-university', 'Obafemi Awolowo University', 'Osun', 'university', 'OAU', '{}'::text[]),
+  ('university-of-nigeria-nsukka', 'University of Nigeria, Nsukka', 'Enugu', 'university', 'UNN', '{}'::text[]),
+  ('ahmadu-bello-university', 'Ahmadu Bello University', 'Kaduna', 'university', 'ABU', '{}'::text[]),
+  ('university-of-benin', 'University of Benin', 'Edo', 'university', 'UNIBEN', '{}'::text[]),
+  ('university-of-ilorin', 'University of Ilorin', 'Kwara', 'university', 'UNILORIN', '{}'::text[]),
+  ('lagos-state-university', 'Lagos State University', 'Lagos', 'university', 'LASU', '{}'::text[]),
+  ('federal-university-of-technology-akure', 'Federal University of Technology, Akure', 'Ondo', 'university', 'FUTA', '{}'::text[]),
+  ('federal-university-of-technology-minna', 'Federal University of Technology, Minna', 'Niger', 'university', 'FUTMINNA', '{}'::text[]),
+  ('federal-university-of-technology-owerri', 'Federal University of Technology, Owerri', 'Imo', 'university', 'FUTO', '{}'::text[]),
+  ('nnamdi-azikiwe-university', 'Nnamdi Azikiwe University', 'Anambra', 'university', 'UNIZIK', '{}'::text[]),
+  ('university-of-calabar', 'University of Calabar', 'Cross River', 'university', 'UNICAL', '{}'::text[]),
+  ('university-of-uyo', 'University of Uyo', 'Akwa Ibom', 'university', 'UNIUYO', '{}'::text[]),
+  ('university-of-port-harcourt', 'University of Port Harcourt', 'Rivers', 'university', 'UNIPORT', '{}'::text[]),
+  ('university-of-maiduguri', 'University of Maiduguri', 'Borno', 'university', 'UNIMAID', '{}'::text[]),
+  ('bayero-university-kano', 'Bayero University, Kano', 'Kano', 'university', 'BUK', '{}'::text[]),
+  ('university-of-jos', 'University of Jos', 'Plateau', 'university', 'UNIJOS', '{}'::text[]),
+  ('federal-university-of-agriculture-abeokuta', 'Federal University of Agriculture, Abeokuta', 'Ogun', 'university', 'FUNAAB', '{}'::text[]),
+  ('olabisi-onabanjo-university', 'Olabisi Onabanjo University', 'Ogun', 'university', 'OOU', '{}'::text[]),
+  ('covenant-university', 'Covenant University', 'Ogun', 'university', 'CU', '{}'::text[]),
+  ('babcock-university', 'Babcock University', 'Ogun', 'university', 'BABCOCK', '{}'::text[]),
+  ('pan-atlantic-university', 'Pan-Atlantic University', 'Lagos', 'university', 'PAU', '{}'::text[]),
+  ('adekunle-ajasin-university-akungba', 'Adekunle Ajasin University, Akungba', 'Ondo', 'university', 'AAUA', '{}'::text[]),
+  ('ekiti-state-university', 'Ekiti State University', 'Ekiti', 'university', 'EKSU', '{}'::text[]),
+  ('ladoke-akintola-university-of-technology', 'Ladoke Akintola University of Technology', 'Oyo', 'university', 'LAUTECH', '{}'::text[]),
+  ('delta-state-university', 'Delta State University', 'Delta', 'university', 'DELSU', '{}'::text[]),
+  ('ambrose-alli-university-ekpoma', 'Ambrose Alli University, Ekpoma', 'Edo', 'university', 'AAU', '{}'::text[]),
+  ('rivers-state-university', 'Rivers State University', 'Rivers', 'university', 'RSU', ARRAY['RSUST']::text[]),
+  ('benue-state-university', 'Benue State University', 'Benue', 'university', 'BSU', '{}'::text[]),
+  ('nasarawa-state-university-keffi', 'Nasarawa State University, Keffi', 'Nasarawa', 'university', 'NSUK', '{}'::text[]),
+  ('kogi-state-university-anyigba', 'Kogi State University, Anyigba', 'Kogi', 'university', 'KSU', '{}'::text[]),
+  ('abia-state-university-uturu', 'Abia State University, Uturu', 'Abia', 'university', 'ABSU', '{}'::text[]),
+  ('imo-state-university-owerri', 'Imo State University, Owerri', 'Imo', 'university', 'IMSU', '{}'::text[]),
+  ('chukwuemeka-odumegwu-ojukwu-university', 'Chukwuemeka Odumegwu Ojukwu University', 'Anambra', 'university', 'COOU', '{}'::text[]),
+  ('enugu-state-university-of-science-and-technology', 'Enugu State University of Science and Technology', 'Enugu', 'university', 'ESUT', '{}'::text[]),
+  ('michael-okpara-university-of-agriculture-umudike', 'Michael Okpara University of Agriculture, Umudike', 'Abia', 'university', 'MOUAU', '{}'::text[]),
+  ('federal-university-oye-ekiti', 'Federal University, Oye-Ekiti', 'Ekiti', 'university', 'FUOYE', '{}'::text[]),
+  ('federal-university-lafia', 'Federal University, Lafia', 'Nasarawa', 'university', 'FULAFIA', '{}'::text[]),
+  ('federal-university-lokoja', 'Federal University, Lokoja', 'Kogi', 'university', 'FULOKOJA', '{}'::text[]),
+  ('usmanu-danfodiyo-university-sokoto', 'Usmanu Danfodiyo University, Sokoto', 'Sokoto', 'university', 'UDUS', ARRAY['UDUSOK']::text[]),
+  ('kaduna-state-university', 'Kaduna State University', 'Kaduna', 'university', 'KASU', '{}'::text[]),
+  ('niger-delta-university', 'Niger Delta University', 'Bayelsa', 'university', 'NDU', '{}'::text[]),
+  ('afe-babalola-university-ado-ekiti', 'Afe Babalola University, Ado-Ekiti', 'Ekiti', 'university', 'ABUAD', '{}'::text[]),
+  ('redeemer-s-university', 'Redeemer''s University', 'Osun', 'university', 'RUN', '{}'::text[]),
+  ('ajayi-crowther-university', 'Ajayi Crowther University', 'Oyo', 'university', 'ACU', '{}'::text[]),
+  ('achievers-university-owo', 'Achievers University, Owo', 'Ondo', 'university', 'ACHIEVERS', '{}'::text[]),
+  ('lead-city-university', 'Lead City University', 'Oyo', 'university', 'LCU', '{}'::text[]),
+  ('kwara-state-university', 'Kwara State University', 'Kwara', 'university', 'KWASU', '{}'::text[]),
+  ('taraba-state-university-jalingo', 'Taraba State University, Jalingo', 'Taraba', 'university', 'TASU', '{}'::text[]),
+  ('gombe-state-university', 'Gombe State University', 'Gombe', 'university', 'GSU', '{}'::text[]),
+  ('sokoto-state-university', 'Sokoto State University', 'Sokoto', 'university', 'SSU', '{}'::text[]),
+  ('university-of-abuja', 'University of Abuja', 'Federal Capital Territory', 'university', 'UNIABUJA', '{}'::text[]),
+  ('national-open-university-of-nigeria', 'National Open University of Nigeria', 'Federal Capital Territory', 'university', 'NOUN', '{}'::text[]),
+  ('abubakar-tafawa-balewa-university', 'Abubakar Tafawa Balewa University', 'Bauchi', 'university', 'ATBU', '{}'::text[]),
+  ('modibbo-adama-university-yola', 'Modibbo Adama University, Yola', 'Adamawa', 'university', 'MAUTECH', ARRAY['MAU']::text[]),
+  ('federal-university-of-petroleum-resources-effurun', 'Federal University of Petroleum Resources, Effurun', 'Delta', 'university', 'FUPRE', '{}'::text[]),
+  ('alex-ekwueme-federal-university-ndufu-alike', 'Alex Ekwueme Federal University, Ndufu-Alike', 'Ebonyi', 'university', 'FUNAI', ARRAY['AE-FUNAI', 'AEFUNAI']::text[]),
+  ('federal-university-otuoke', 'Federal University, Otuoke', 'Bayelsa', 'university', 'FUOTUOKE', '{}'::text[]),
+  ('federal-university-dutse', 'Federal University, Dutse', 'Jigawa', 'university', 'FUD', '{}'::text[]),
+  ('federal-university-dutsin-ma', 'Federal University, Dutsin-Ma', 'Katsina', 'university', 'FUDMA', '{}'::text[]),
+  ('federal-university-kashere', 'Federal University, Kashere', 'Gombe', 'university', 'FUKASHERE', '{}'::text[]),
+  ('federal-university-wukari', 'Federal University, Wukari', 'Taraba', 'university', 'FUWUKARI', '{}'::text[]),
+  ('federal-university-birnin-kebbi', 'Federal University, Birnin Kebbi', 'Kebbi', 'university', 'FUBK', '{}'::text[]),
+  ('federal-university-gashua', 'Federal University, Gashua', 'Yobe', 'university', 'FUGASHUA', '{}'::text[]),
+  ('federal-university-gusau', 'Federal University, Gusau', 'Zamfara', 'university', 'FUGUS', '{}'::text[]),
+  ('joseph-sarwuan-tarka-university-makurdi', 'Joseph Sarwuan Tarka University, Makurdi', 'Benue', 'university', 'JOSTUM', ARRAY['UAM', 'FUAM']::text[]),
+  ('osun-state-university', 'Osun State University', 'Osun', 'university', 'UNIOSUN', '{}'::text[]),
+  ('ebonyi-state-university', 'Ebonyi State University', 'Ebonyi', 'university', 'EBSU', '{}'::text[]),
+  ('akwa-ibom-state-university', 'Akwa Ibom State University', 'Akwa Ibom', 'university', 'AKSU', '{}'::text[]),
+  ('university-of-cross-river-state', 'University of Cross River State', 'Cross River', 'university', 'UNICROSS', ARRAY['CRUTECH']::text[]),
+  ('tai-solarin-university-of-education', 'Tai Solarin University of Education', 'Ogun', 'university', 'TASUED', '{}'::text[]),
+  ('lagos-state-university-of-science-and-technology', 'Lagos State University of Science and Technology', 'Lagos', 'university', 'LASUSTECH', '{}'::text[]),
+  ('landmark-university', 'Landmark University', 'Kwara', 'university', 'LANDMARK', '{}'::text[]),
+  ('bowen-university', 'Bowen University', 'Osun', 'university', 'BOWEN', '{}'::text[]),
+  ('american-university-of-nigeria', 'American University of Nigeria', 'Adamawa', 'university', 'AUN', '{}'::text[]),
+  ('nile-university-of-nigeria', 'Nile University of Nigeria', 'Federal Capital Territory', 'university', 'NILE', '{}'::text[]),
+  ('veritas-university', 'Veritas University', 'Federal Capital Territory', 'university', 'VERITAS', '{}'::text[]),
+  ('madonna-university', 'Madonna University', 'Anambra', 'university', 'MADONNA', '{}'::text[]),
+  ('igbinedion-university-okada', 'Igbinedion University, Okada', 'Edo', 'university', 'IUO', '{}'::text[]),
+  ('caleb-university', 'Caleb University', 'Lagos', 'university', 'CALEB', '{}'::text[]),
+  ('benson-idahosa-university', 'Benson Idahosa University', 'Edo', 'university', 'BIU', '{}'::text[]),
+  ('yaba-college-of-technology', 'Yaba College of Technology', 'Lagos', 'polytechnic', 'YABATECH', '{}'::text[]),
+  ('federal-polytechnic-ilaro', 'Federal Polytechnic, Ilaro', 'Ogun', 'polytechnic', 'ILARO', '{}'::text[]),
+  ('federal-polytechnic-bida', 'Federal Polytechnic, Bida', 'Niger', 'polytechnic', 'BIDA', '{}'::text[]),
+  ('federal-polytechnic-offa', 'Federal Polytechnic, Offa', 'Kwara', 'polytechnic', 'OFFA', '{}'::text[]),
+  ('federal-polytechnic-auchi', 'Federal Polytechnic, Auchi', 'Edo', 'polytechnic', 'AUCHI', '{}'::text[]),
+  ('federal-polytechnic-nekede', 'Federal Polytechnic, Nekede', 'Imo', 'polytechnic', 'NEKEDE', '{}'::text[]),
+  ('federal-polytechnic-ado-ekiti', 'Federal Polytechnic, Ado-Ekiti', 'Ekiti', 'polytechnic', 'ADO POLY', '{}'::text[]),
+  ('federal-polytechnic-idah', 'Federal Polytechnic, Idah', 'Kogi', 'polytechnic', 'IDAH', '{}'::text[]),
+  ('kaduna-polytechnic', 'Kaduna Polytechnic', 'Kaduna', 'polytechnic', 'KADPOLY', '{}'::text[]),
+  ('kwara-state-polytechnic-ilorin', 'Kwara State Polytechnic, Ilorin', 'Kwara', 'polytechnic', 'KWARAPOLY', '{}'::text[]),
+  ('moshood-abiola-polytechnic', 'Moshood Abiola Polytechnic', 'Ogun', 'polytechnic', 'MAPOLY', '{}'::text[]),
+  ('osun-state-polytechnic-iree', 'Osun State Polytechnic, Iree', 'Osun', 'polytechnic', 'OSPOLY', '{}'::text[]),
+  ('rufus-giwa-polytechnic-owo', 'Rufus Giwa Polytechnic, Owo', 'Ondo', 'polytechnic', 'RUGIPO', '{}'::text[]),
+  ('petroleum-training-institute-effurun', 'Petroleum Training Institute, Effurun', 'Delta', 'polytechnic', 'PTI', '{}'::text[]),
+  ('akanu-ibiam-federal-polytechnic-unwana', 'Akanu Ibiam Federal Polytechnic, Unwana', 'Ebonyi', 'polytechnic', 'UNWANA', '{}'::text[]),
+  ('the-polytechnic-ibadan', 'The Polytechnic, Ibadan', 'Oyo', 'polytechnic', 'IBADAN POLY', '{}'::text[]),
+  ('federal-polytechnic-ede', 'Federal Polytechnic, Ede', 'Osun', 'polytechnic', 'EDE', '{}'::text[]),
+  ('federal-polytechnic-oko', 'Federal Polytechnic, Oko', 'Anambra', 'polytechnic', 'OKO', '{}'::text[]),
+  ('institute-of-management-and-technology-enugu', 'Institute of Management and Technology, Enugu', 'Enugu', 'polytechnic', 'IMT', '{}'::text[]),
+  ('federal-polytechnic-nasarawa', 'Federal Polytechnic, Nasarawa', 'Nasarawa', 'polytechnic', 'NASPOLY', '{}'::text[]),
+  ('kano-state-polytechnic', 'Kano State Polytechnic', 'Kano', 'polytechnic', 'KANOPOLY', '{}'::text[]),
+  ('plateau-state-polytechnic-barkin-ladi', 'Plateau State Polytechnic, Barkin Ladi', 'Plateau', 'polytechnic', 'PLAPOLY', '{}'::text[]),
+  ('adeyemi-college-of-education-ondo', 'Adeyemi College of Education, Ondo', 'Ondo', 'college', 'ADEYEMI', '{}'::text[]),
+  ('alvan-ikoku-federal-college-of-education', 'Alvan Ikoku Federal College of Education', 'Imo', 'college', 'ALVAN', '{}'::text[]),
+  ('federal-college-of-education-kano', 'Federal College of Education, Kano', 'Kano', 'college', 'FCE KANO', '{}'::text[]),
+  ('federal-college-of-education-technical-akoka', 'Federal College of Education (Technical), Akoka', 'Lagos', 'college', 'FCET AKOKA', '{}'::text[]),
+  ('college-of-education-ikere-ekiti', 'College of Education, Ikere-Ekiti', 'Ekiti', 'college', 'COE IKERE', '{}'::text[]),
+  ('nce-akamkpa', 'NCE Akamkpa', 'Cross River', 'college', 'AKAMKPA', '{}'::text[])
+on conflict (id) do update set
+  name = excluded.name,
+  state = excluded.state,
+  type = excluded.type,
+  acronym = excluded.acronym,
+  aliases = excluded.aliases;
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  incoming_school_id text;
+begin
+  incoming_school_id := nullif(btrim(coalesce(new.raw_user_meta_data->>'school_id', '')), '');
+  if incoming_school_id is not null and not exists (
+    select 1 from public.schools where id = incoming_school_id
+  ) then
+    incoming_school_id := null;
+  end if;
+
+  insert into public.profiles (id, full_name, avatar_url, school_id, bio, email)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'full_name', 'Student'),
+    new.raw_user_meta_data->>'avatar_url',
+    incoming_school_id,
+    new.raw_user_meta_data->>'bio',
+    new.email
+  )
+  on conflict (id) do update set
+    full_name = coalesce(excluded.full_name, public.profiles.full_name),
+    avatar_url = coalesce(excluded.avatar_url, public.profiles.avatar_url),
+    school_id = coalesce(excluded.school_id, public.profiles.school_id),
+    bio = coalesce(excluded.bio, public.profiles.bio),
+    email = coalesce(excluded.email, public.profiles.email);
+
+  insert into public.contact_details (user_id, phone, whatsapp)
+  values (
+    new.id,
+    new.raw_user_meta_data->>'phone',
+    new.raw_user_meta_data->>'whatsapp'
+  )
+  on conflict (user_id) do update set
+    phone = coalesce(excluded.phone, public.contact_details.phone),
+    whatsapp = coalesce(excluded.whatsapp, public.contact_details.whatsapp),
+    updated_at = now();
+
+  return new;
+end;
+$$;

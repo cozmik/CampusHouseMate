@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /messages
+Disallow: /messages/
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /auth/
+Disallow: /verify-email
+Disallow: /reset-password
+Disallow: /forgot-password
+
+Sitemap: https://housemates.ng/sitemap.xml

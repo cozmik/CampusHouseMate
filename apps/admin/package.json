@@ -1,0 +1,37 @@
+{
+  "name": "admin",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json"
+  },
+  "dependencies": {
+    "@housemates/shared-data": "workspace:*",
+    "@housemates/shared-supabase": "workspace:*",
+    "@housemates/shared-types": "workspace:*",
+    "@housemates/shared-utils": "workspace:*",
+    "@housemates/shared-ui": "workspace:*",
+    "@supabase/supabase-js": "^2.52.0",
+    "lucide-react": "^0.542.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.8.2",
+    "recharts": "^3.1.2",
+    "sonner": "^2.0.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.2",
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.19",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.2"
+  }
+}

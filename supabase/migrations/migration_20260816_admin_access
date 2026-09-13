@@ -1,0 +1,47 @@
+-- ============ Back office admin access ============
+-- Grants the admin user role full read on platform activity tables and the
+-- ability to moderate listings. The admin back-office app (apps/admin) relies
+-- on these policies for its dashboard stats and moderation workflows.
+
+-- ---------- conversations: admins can read ----------
+drop policy if exists "conv_admin_read" on public.conversations;
+create policy "conv_admin_read" on public.conversations
+  for select
+  using (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+  );
+
+-- ---------- messages: admins can read ----------
+drop policy if exists "msg_admin_read" on public.messages;
+create policy "msg_admin_read" on public.messages
+  for select
+  using (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+  );
+
+-- ---------- saved_listings: admins can read ----------
+drop policy if exists "saved_admin_read" on public.saved_listings;
+create policy "saved_admin_read" on public.saved_listings
+  for select
+  using (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+  );
+
+-- ---------- listings: admins can update status ----------
+drop policy if exists "listings_admin_update" on public.listings;
+create policy "listings_admin_update" on public.listings
+  for update
+  using (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+  )
+  with check (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+  );
+
+-- ---------- contact_details: admins can read (used by users list) ----------
+drop policy if exists "contact_admin_read" on public.contact_details;
+create policy "contact_admin_read" on public.contact_details
+  for select
+  using (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+  );

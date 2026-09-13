@@ -1,0 +1,19 @@
+{
+  "name": "@housemates/shared-supabase",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@housemates/shared-types": "workspace:*",
+    "@housemates/shared-utils": "workspace:*",
+    "@supabase/supabase-js": "^2.52.0"
+  },
+  "devDependencies": {
+    "vite": "^7.3.2"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  }
+}
