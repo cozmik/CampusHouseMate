@@ -42,7 +42,7 @@ export function DataTable<T extends { id: string }>({
     return (
       <div className="glass flex min-h-[16rem] flex-col items-center justify-center gap-2 rounded-2xl">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-black/5">
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <Inbox className="h-4 w-4 text-muted-foreground" />
         </span>
         <p className="text-sm text-muted-foreground">{empty ?? "No records yet."}</p>
       </div>
