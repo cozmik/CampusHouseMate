@@ -12,7 +12,7 @@ import { supabase } from "@housemates/shared-supabase";
 import { mapConversation, mapListing, mapMessage, mapProfile, mapReport, type Json, type RawConversation, type RawListing, type RawMessage, type RawPhoto, type RawProfile, type RawReport } from "@housemates/shared-supabase";
 import { schools as schoolsData, getSchool as getSchoolData, lgasForState } from "@housemates/shared-data";
 import { toast } from "sonner";
-import { joinName, namesFromMetadata, splitFullName, uid } from "@housemates/shared-utils";
+import { compressListingPhoto, joinName, namesFromMetadata, splitFullName, uid } from "@housemates/shared-utils";
 import { captureEvent } from "@/lib/posthog";
 import type {
   Conversation,
@@ -137,12 +137,13 @@ async function uploadListingPhotos(
     const p = photos[i];
     let url = p.url;
     if (p.file) {
-      const ext = (p.file.name.split(".").pop() || "jpg").toLowerCase();
+      const file = await compressListingPhoto(p.file);
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
       const path = `${ownerId}/${uid("p")}.${ext}`;
       const { error } = await supabase.storage
         .from(LISTING_PHOTOS_BUCKET)
-        .upload(path, p.file, {
-          contentType: p.file.type || "image/jpeg",
+        .upload(path, file, {
+          contentType: file.type || "image/jpeg",
           upsert: false,
         });
       if (error) throw error;
@@ -705,15 +706,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
           patch.lastName ?? currentUser.lastName,
         ) ||
         currentUser.fullName;
-      await supabase
+      const { error } = await supabase
         .from("profiles")
         .update({
           full_name: nextFullName,
           avatar_url: patch.avatarUrl,
           school_id: patch.schoolId,
           bio: patch.bio,
+          email_notifications: patch.emailNotifications,
         })
         .eq("id", id);
+      if (error) throw error;
       if (patch.firstName !== undefined || patch.lastName !== undefined || patch.fullName !== undefined) {
         await supabase.auth.updateUser({
           data: {
@@ -1498,7 +1501,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [cacheProfiles]);
 
   const setUserAdmin = useCallback(async (id: string, isAdmin: boolean) => {
-    await supabase.from("profiles").update({ is_admin: isAdmin }).eq("id", id);
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({ is_admin: isAdmin })
+      .eq("id", id)
+      .select("is_admin")
+      .maybeSingle();
+    if (error) throw error;
+    if (!data || data.is_admin !== isAdmin) {
+      throw new Error("Admin access was not saved");
+    }
   }, []);
 
   const setUserSuspended = useCallback(async (id: string, isSuspended: boolean) => {

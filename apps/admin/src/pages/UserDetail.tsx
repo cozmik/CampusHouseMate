@@ -99,6 +99,8 @@ export default function UserDetail() {
       await fn(detail.id, value);
       setDetail((prev) => (prev ? { ...prev, ...patch } : prev));
       toast.success(message);
+    } catch {
+      toast.error("Couldn't save that change");
     } finally {
       setBusy(false);
     }

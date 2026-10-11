@@ -26,7 +26,11 @@ export default function AdminUsers() {
   const toggleAdmin = async (user: Profile) => {
     const next = !user.isAdmin;
     setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, isAdmin: next } : u)));
-    await setUserAdmin(user.id, next);
+    try {
+      await setUserAdmin(user.id, next);
+    } catch {
+      setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, isAdmin: Boolean(user.isAdmin) } : u)));
+    }
   };
 
   const toggleSuspended = async (user: Profile) => {

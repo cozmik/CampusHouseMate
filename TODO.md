@@ -23,11 +23,11 @@
 
 ## 3. Email notifications (1.5–2 days)
 
-- [ ] Pick a transactional email provider (Resend / Postmark), verify the `housemates.ng` sending domain
-- [ ] Supabase edge function that sends "new message" emails
-- [ ] Database webhook on `messages` insert calls the function
-- [ ] Only email if the recipient hasn't read the conversation for a few minutes; at most one email per conversation per window (depends on item 1)
-- [ ] Email on/off switch on the Profile page
+- [ ] Resend account, verify the `housemates.ng` sending domain, deploy `notify-message`, set the secrets below
+- [x] Edge function `supabase/functions/notify-message` sends "new message" emails through Resend
+- [x] Message insert enqueues a job; pg_cron calls the function once a minute (an insert webhook would send before the quiet period)
+- [x] Send only if the chat is still unread after 3 minutes; at most one email per conversation per 30 minutes
+- [x] Email on/off switch on the Profile page (`profiles.email_notifications`)
 - [ ] Later: web push (another ~2 days; iPhone needs the site installed as an app)
 
 ## 4. Account deletion (~1 day)
@@ -54,6 +54,6 @@
 
 ## Needs you
 
-- Email provider account and sending domain (item 3)
+- Resend API key, verified `housemates.ng` domain, and function secrets (item 3). Apply migration `20261011_180500000`.
 - Captcha site key (item 6)
 - Applying new migrations to the Supabase project

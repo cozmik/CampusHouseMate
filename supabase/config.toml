@@ -1,1 +1,5 @@
 project_id = "spb-t4niz131uu37850f"
+
+# Cron calls this with a shared secret, not a user JWT.
+[functions.notify-message]
+verify_jwt = false

@@ -1,4 +1,5 @@
 import { getSchool, lgasForState } from "@housemates/shared-data";
+import { compressListingPhoto } from "@housemates/shared-utils";
 import type {
   CreateAdminListingInput,
   Listing,
@@ -151,7 +152,16 @@ export async function fetchAllUsers(): Promise<AdminUser[]> {
 }
 
 export async function setUserAdmin(id: string, isAdmin: boolean): Promise<void> {
-  await supabase.from("profiles").update({ is_admin: isAdmin }).eq("id", id);
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ is_admin: isAdmin })
+    .eq("id", id)
+    .select("is_admin")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data || data.is_admin !== isAdmin) {
+    throw new Error("Admin access was not saved");
+  }
 }
 
 export async function setUserSuspended(id: string, isSuspended: boolean): Promise<void> {
@@ -269,10 +279,11 @@ export async function createAdminListing(input: CreateAdminListingInput): Promis
     const photo = input.photos[i];
     let url = photo.url;
     if (photo.file) {
-      const ext = (photo.file.name.split(".").pop() || "jpg").toLowerCase();
+      const file = await compressListingPhoto(photo.file);
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
       const path = `${uploaderId}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("listing-photos").upload(path, photo.file, {
-        contentType: photo.file.type || "image/jpeg",
+      const { error } = await supabase.storage.from("listing-photos").upload(path, file, {
+        contentType: file.type || "image/jpeg",
         upsert: false,
       });
       if (error) throw new Error(error.message);

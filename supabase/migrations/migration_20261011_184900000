@@ -1,0 +1,35 @@
+-- Admin grants were not sticking.
+-- protect_is_admin_trigger still forces is_admin back to its old value on every
+-- authenticated update, including updates by an admin. protect_admin_fields was
+-- written to allow that, but it was never attached to a trigger.
+
+alter table public.profiles
+  add column if not exists is_suspended boolean not null default false;
+
+create or replace function public.protect_admin_fields()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  acting_is_admin boolean;
+begin
+  if auth.role() = 'authenticated' then
+    select is_admin into acting_is_admin from public.profiles where id = auth.uid();
+    if coalesce(acting_is_admin, false) = false then
+      new.is_admin := old.is_admin;
+      new.is_suspended := old.is_suspended;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists protect_is_admin_trigger on public.profiles;
+drop trigger if exists protect_admin_fields_trigger on public.profiles;
+create trigger protect_admin_fields_trigger
+before update on public.profiles
+for each row execute function public.protect_admin_fields();
+
+drop function if exists public.protect_is_admin();

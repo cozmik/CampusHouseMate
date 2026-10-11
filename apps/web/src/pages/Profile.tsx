@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Camera, Check, KeyRound, Link as LinkIcon, Loader2, Mail, User as UserIcon, Flag } from "lucide-react";
+import { Switch } from "@housemates/shared-ui/switch";
 import { toast } from "sonner";
 import { useApp } from "@/lib/store";
 import { Button } from "@housemates/shared-ui/button";
@@ -32,6 +33,8 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordBusy, setPasswordBusy] = useState(false);
+  const [emailNotifications, setEmailNotifications] = useState(currentUser?.emailNotifications !== false);
+  const [emailPrefBusy, setEmailPrefBusy] = useState(false);
 
   if (!currentUser) return null;
 
@@ -67,6 +70,21 @@ export default function Profile() {
       toast.error("Could not save", { description: e instanceof Error ? e.message : undefined });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const setMessageEmails = async (enabled: boolean) => {
+    setEmailNotifications(enabled);
+    setEmailPrefBusy(true);
+    try {
+      await updateProfile({ emailNotifications: enabled });
+    } catch (e) {
+      setEmailNotifications(!enabled);
+      toast.error("Could not update email preference", {
+        description: e instanceof Error ? e.message : undefined,
+      });
+    } finally {
+      setEmailPrefBusy(false);
     }
   };
 
@@ -164,6 +182,21 @@ export default function Profile() {
         </div>
       </div>
       <p className="mt-4 text-center text-xs text-muted-foreground">Your phone & WhatsApp stay hidden until you tap "Share contact" in a chat.</p>
+
+      <div className="mt-6 flex items-center justify-between gap-4 rounded-3xl border border-border/70 bg-card p-6 shadow-card">
+        <div>
+          <h2 className="text-base font-semibold">Message emails</h2>
+          <p className="text-sm text-muted-foreground">
+            Email me when someone messages me, if I have not opened the chat within a few minutes.
+          </p>
+        </div>
+        <Switch
+          checked={emailNotifications}
+          disabled={emailPrefBusy}
+          onCheckedChange={(checked) => void setMessageEmails(checked)}
+          aria-label="Email me about new messages"
+        />
+      </div>
 
       <div className="mt-6 space-y-6 rounded-3xl border border-border/70 bg-card p-6 shadow-card">
         <div>

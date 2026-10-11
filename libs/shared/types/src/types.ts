@@ -92,6 +92,7 @@ export interface Profile {
   bio?: string;
   isAdmin?: boolean;
   isSuspended?: boolean;
+  emailNotifications?: boolean;
 }
 
 export interface Message {

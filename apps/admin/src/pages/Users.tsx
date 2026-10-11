@@ -61,8 +61,13 @@ export default function Users() {
   const toggleAdmin = async (user: AdminUser) => {
     const next = !user.isAdmin;
     setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, isAdmin: next } : u)));
-    await setUserAdmin(user.id, next);
-    toast.success(next ? `${user.fullName} is now an admin` : `Admin rights removed from ${user.fullName}`);
+    try {
+      await setUserAdmin(user.id, next);
+      toast.success(next ? `${user.fullName} is now an admin` : `Admin rights removed from ${user.fullName}`);
+    } catch {
+      setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, isAdmin: Boolean(user.isAdmin) } : u)));
+      toast.error(`Couldn't update admin access for ${user.fullName}`);
+    }
   };
 
   const toggleSuspended = async (user: AdminUser) => {

@@ -3574,6 +3574,7 @@ export type Database = {
           bio: string | null
           created_at: string
           email: string | null
+          email_notifications: boolean
           full_name: string
           id: string
           is_admin: boolean
@@ -3585,6 +3586,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email?: string | null
+          email_notifications?: boolean
           full_name?: string
           id: string
           is_admin?: boolean
@@ -3596,6 +3598,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email?: string | null
+          email_notifications?: boolean
           full_name?: string
           id?: string
           is_admin?: boolean

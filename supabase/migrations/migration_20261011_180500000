@@ -1,0 +1,293 @@
+-- New-message email.
+-- A message insert enqueues one job per recipient. The job waits 3 minutes so a
+-- burst of messages collapses into a single send, and it is dropped if the
+-- recipient opens the chat first. At most one email goes out per conversation
+-- per recipient every 30 minutes.
+--
+-- Sending is not done from this trigger. An insert webhook would fire
+-- immediately, before the quiet period. pg_cron calls the notify-message edge
+-- function once a minute, and that function sends jobs whose send_after has
+-- passed. System messages are not emailed (they are written for the sender,
+-- e.g. "You started a conversation").
+
+alter table public.profiles
+  add column if not exists email_notifications boolean not null default true;
+
+create table if not exists public.message_email_jobs (
+  id uuid primary key default gen_random_uuid(),
+  conversation_id uuid not null references public.conversations(id) on delete cascade,
+  recipient_id uuid not null references public.profiles(id) on delete cascade,
+  message_id uuid not null references public.messages(id) on delete cascade,
+  send_after timestamptz not null,
+  sent_at timestamptz,
+  skipped_at timestamptz,
+  skip_reason text,
+  claimed_at timestamptz,
+  claim_token uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create unique index if not exists message_email_jobs_pending_idx
+  on public.message_email_jobs (conversation_id, recipient_id)
+  where sent_at is null and skipped_at is null;
+
+create index if not exists message_email_jobs_due_idx
+  on public.message_email_jobs (send_after)
+  where sent_at is null and skipped_at is null;
+
+alter table public.message_email_jobs enable row level security;
+
+revoke all on public.message_email_jobs from anon, authenticated;
+grant select, update on public.message_email_jobs to service_role;
+
+create or replace function public.handle_new_message()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  recipient uuid;
+  recent_sent timestamptz;
+begin
+  update public.conversations c
+  set last_message_at = greatest(c.last_message_at, new.created_at),
+      seeker_last_read_at = case when new.sender_id = c.seeker_id then new.created_at else c.seeker_last_read_at end,
+      lister_last_read_at = case when new.sender_id = c.lister_id then new.created_at else c.lister_last_read_at end
+  where c.id = new.conversation_id;
+
+  if new.type = 'system' then
+    return new;
+  end if;
+
+  select case
+    when new.sender_id = c.seeker_id then c.lister_id
+    when new.sender_id = c.lister_id then c.seeker_id
+  end
+  into recipient
+  from public.conversations c
+  where c.id = new.conversation_id;
+
+  if recipient is null or recipient = new.sender_id then
+    return new;
+  end if;
+
+  if exists (
+    select 1 from public.profiles p
+    where p.id = recipient and p.email_notifications = false
+  ) then
+    return new;
+  end if;
+
+  select max(j.sent_at)
+  into recent_sent
+  from public.message_email_jobs j
+  where j.conversation_id = new.conversation_id
+    and j.recipient_id = recipient;
+
+  if recent_sent is not null and recent_sent > now() - interval '30 minutes' then
+    return new;
+  end if;
+
+  insert into public.message_email_jobs (conversation_id, recipient_id, message_id, send_after)
+  values (new.conversation_id, recipient, new.id, now() + interval '3 minutes')
+  on conflict (conversation_id, recipient_id) where sent_at is null and skipped_at is null
+  do update set
+    message_id = excluded.message_id,
+    send_after = excluded.send_after,
+    claimed_at = null,
+    claim_token = null,
+    updated_at = now();
+
+  return new;
+end;
+$$;
+
+-- Called by the notify-message edge function (service role only).
+-- Claims due jobs and skips ones that should not be emailed.
+create or replace function public.claim_due_message_emails(batch int default 20)
+returns table (
+  job_id uuid,
+  claim_token uuid,
+  conversation_id uuid,
+  message_id uuid,
+  recipient_email text,
+  recipient_name text,
+  sender_name text,
+  listing_title text,
+  message_type text,
+  message_preview text
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r record;
+  token uuid;
+  reason text;
+  v_email text;
+  v_recipient_name text;
+  v_sender_name text;
+  v_title text;
+  v_type text;
+  v_content text;
+  v_notifications boolean;
+  v_last_message_at timestamptz;
+  v_last_read_at timestamptz;
+begin
+  update public.message_email_jobs
+  set claimed_at = null,
+      claim_token = null
+  where sent_at is null
+    and skipped_at is null
+    and claimed_at is not null
+    and claimed_at < now() - interval '10 minutes';
+
+  for r in
+    select j.id, j.conversation_id, j.recipient_id, j.message_id
+    from public.message_email_jobs j
+    where j.sent_at is null
+      and j.skipped_at is null
+      and j.claimed_at is null
+      and j.send_after <= now()
+    order by j.send_after
+    limit greatest(batch, 1)
+    for update skip locked
+  loop
+    token := gen_random_uuid();
+    update public.message_email_jobs
+    set claimed_at = now(),
+        claim_token = token,
+        updated_at = now()
+    where id = r.id;
+
+    reason := null;
+    v_email := null;
+    select
+      p.email,
+      p.full_name,
+      p.email_notifications,
+      sender.full_name,
+      l.title,
+      m.type,
+      m.content,
+      c.last_message_at,
+      case
+        when r.recipient_id = c.seeker_id then c.seeker_last_read_at
+        else c.lister_last_read_at
+      end
+    into
+      v_email,
+      v_recipient_name,
+      v_notifications,
+      v_sender_name,
+      v_title,
+      v_type,
+      v_content,
+      v_last_message_at,
+      v_last_read_at
+    from public.conversations c
+    join public.messages m on m.id = r.message_id
+    join public.profiles p on p.id = r.recipient_id
+    join public.profiles sender on sender.id = m.sender_id
+    join public.listings l on l.id = c.listing_id
+    where c.id = r.conversation_id;
+
+    if v_title is null then
+      reason := 'missing';
+    elsif coalesce(v_notifications, true) = false then
+      reason := 'opt_out';
+    elsif v_email is null or length(trim(v_email)) = 0 then
+      reason := 'no_email';
+    elsif v_type = 'system' then
+      reason := 'system';
+    elsif v_last_read_at is not null and v_last_message_at is not null and v_last_read_at >= v_last_message_at then
+      reason := 'read';
+    end if;
+
+    if reason is not null then
+      update public.message_email_jobs
+      set skipped_at = now(),
+          skip_reason = reason,
+          claimed_at = null,
+          claim_token = null,
+          updated_at = now()
+      where id = r.id;
+      continue;
+    end if;
+
+    job_id := r.id;
+    claim_token := token;
+    conversation_id := r.conversation_id;
+    message_id := r.message_id;
+    recipient_email := v_email;
+    recipient_name := v_recipient_name;
+    sender_name := v_sender_name;
+    listing_title := v_title;
+    message_type := v_type;
+    message_preview := left(v_content, 180);
+    return next;
+  end loop;
+end;
+$$;
+
+revoke all on function public.claim_due_message_emails(int) from public;
+revoke all on function public.claim_due_message_emails(int) from anon, authenticated;
+grant execute on function public.claim_due_message_emails(int) to service_role;
+
+-- Schedule the sender. The secret is read at run time from Vault, so create it
+-- after deploy (same value as the function secret MESSAGE_EMAIL_SECRET):
+--   select vault.create_secret('<MESSAGE_EMAIL_SECRET>', 'message_email_cron_secret');
+-- The function URL is this project's Supabase API. Change it if the project ref differs.
+do $cron$
+begin
+  perform set_config('search_path', 'public, cron, net, vault, extensions, pg_catalog', true);
+  begin
+    create extension if not exists pg_cron;
+  exception when others then
+    raise notice 'pg_cron unavailable: %', sqlerrm;
+  end;
+  begin
+    create extension if not exists pg_net;
+  exception when others then
+    raise notice 'pg_net unavailable: %', sqlerrm;
+  end;
+
+  if exists (select 1 from pg_extension where extname = 'pg_cron')
+     and exists (select 1 from pg_extension where extname = 'pg_net') then
+    if exists (select 1 from cron.job where jobname = 'notify-unread-messages') then
+      perform cron.unschedule('notify-unread-messages');
+    end if;
+    perform cron.schedule(
+      'notify-unread-messages',
+      '* * * * *',
+      $job$
+      select net.http_post(
+        url := 'https://mdewakadxwgxigijmcxe.supabase.co/functions/v1/notify-message',
+        headers := jsonb_build_object(
+          'Content-Type', 'application/json',
+          'x-message-email-secret', coalesce(
+            (select decrypted_secret from vault.decrypted_secrets where name = 'message_email_cron_secret' limit 1),
+            ''
+          )
+        ),
+        body := '{"source":"cron"}'::jsonb
+      )
+      where exists (
+        select 1
+        from public.message_email_jobs j
+        where j.sent_at is null
+          and j.skipped_at is null
+          and j.send_after <= now()
+      );
+      $job$
+    );
+  else
+    raise notice 'notify-unread-messages was not scheduled. Enable pg_cron and pg_net, then re-run this block.';
+  end if;
+exception when others then
+  raise notice 'could not schedule notify-unread-messages: %', sqlerrm;
+end
+$cron$;

@@ -50,6 +50,7 @@ export interface RawProfile {
   created_at: string;
   is_admin?: boolean;
   is_suspended?: boolean;
+  email_notifications?: boolean | null;
 }
 export interface RawConversation {
   id: string;
@@ -131,6 +132,7 @@ export function mapProfile(
     bio: row.bio ?? undefined,
     isAdmin: row.is_admin ?? false,
     isSuspended: row.is_suspended ?? false,
+    emailNotifications: row.email_notifications ?? true,
   };
 }
 
