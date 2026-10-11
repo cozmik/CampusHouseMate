@@ -17,7 +17,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-background/95 backdrop-blur-md md:hidden">
-      <div className="mx-auto flex max-w-md items-end justify-around px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5">
+      <div className="mx-auto flex max-w-md items-end justify-between px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5">
         {items.map((item) => {
           const content = (
             <span className="flex flex-col items-center gap-0.5">
@@ -39,7 +39,7 @@ export function BottomNav() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                cn("flex flex-1 flex-col items-center gap-0.5 rounded-lg py-1 transition-colors",
+                cn("flex flex-col items-center gap-0.5 rounded-lg py-1 transition-colors",
                   isActive && "[&>span>span:first-child]:text-primary [&>span>span:last-child]:text-primary")
               }
             >
