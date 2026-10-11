@@ -1,0 +1,29 @@
+-- Admins can publish a listing for a student who has not signed up.
+-- owner_id is the account that receives interest chats (usually the admin).
+-- contact_* is what seekers see, and what "Share contact" reveals for that room.
+
+alter table public.listings
+  add column if not exists contact_name text,
+  add column if not exists contact_phone text,
+  add column if not exists contact_whatsapp text;
+
+drop policy if exists "listings_admin_insert" on public.listings;
+create policy "listings_admin_insert" on public.listings
+  for insert
+  with check (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+  );
+
+drop policy if exists "listings_admin_delete" on public.listings;
+create policy "listings_admin_delete" on public.listings
+  for delete
+  using (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+  );
+
+drop policy if exists "photos_admin_insert" on public.listing_photos;
+create policy "photos_admin_insert" on public.listing_photos
+  for insert
+  with check (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+  );

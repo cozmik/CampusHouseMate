@@ -352,6 +352,9 @@ importers:
 
   libs/shared/supabase:
     dependencies:
+      '@housemates/shared-data':
+        specifier: workspace:*
+        version: link:../data
       '@housemates/shared-types':
         specifier: workspace:*
         version: link:../types
@@ -370,6 +373,12 @@ importers:
 
   libs/shared/ui:
     dependencies:
+      '@housemates/shared-data':
+        specifier: workspace:*
+        version: link:../data
+      '@housemates/shared-types':
+        specifier: workspace:*
+        version: link:../types
       '@housemates/shared-utils':
         specifier: workspace:*
         version: link:../utils

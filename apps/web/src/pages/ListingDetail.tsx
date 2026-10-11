@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Heart, MapPin, CalendarDays, BedDouble, Users, MessageSquare, ShieldCheck, Sparkles, Check, Clock, Flag, Loader2 } from "lucide-react";
+import { ArrowLeft, Heart, MapPin, CalendarDays, BedDouble, Users, MessageSquare, LayoutDashboard, ShieldCheck, Sparkles, Check, Clock, Flag, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/lib/store";
 import { captureEvent } from "@/lib/posthog";
@@ -152,7 +152,7 @@ export default function ListingDetail() {
                       ))}
                     </div>
                   </div>
-                  <Button asChild variant="outline" className="w-full"><Link to="/dashboard"><MessageSquare className="h-4 w-4" />Go to dashboard</Link></Button>
+                  <Button asChild variant="outline" className="w-full"><Link to="/dashboard"><LayoutDashboard className="h-4 w-4" />Go to dashboard</Link></Button>
                 </div>
               ) : (
                 <div className="mt-4 space-y-2">
@@ -164,20 +164,20 @@ export default function ListingDetail() {
                   )}
                 </div>
               )}
-              {owner && (
+              {(listing.contactName || owner) && (
                 <div className="mt-5 border-t border-border pt-4">
                   <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Posted by</p>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-11 w-11">
-                      <AvatarImage src={owner.avatarUrl} alt={owner.fullName} />
-                      <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">{initials(owner.fullName)}</AvatarFallback>
+                      {!listing.contactName && owner?.avatarUrl ? <AvatarImage src={owner.avatarUrl} alt={owner.fullName} /> : null}
+                      <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">{initials(listing.contactName || owner?.fullName || "?")}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold">{owner.fullName}</p>
-                      <p className="truncate text-xs text-muted-foreground">{getSchool(owner.schoolId ?? "")?.name ?? "Student"}</p>
+                      <p className="truncate text-sm font-semibold">{listing.contactName || owner?.fullName}</p>
+                      <p className="truncate text-xs text-muted-foreground">{getSchool(listing.contactName ? listing.schoolId : (owner?.schoolId ?? ""))?.name ?? "Student"}</p>
                     </div>
                   </div>
-                  {owner.bio && <p className="mt-2 text-xs text-muted-foreground">{owner.bio}</p>}
+                  {!listing.contactName && owner?.bio && <p className="mt-2 text-xs text-muted-foreground">{owner.bio}</p>}
                 </div>
               )}
               {!isOwner && (

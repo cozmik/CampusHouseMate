@@ -6,6 +6,7 @@ import Dashboard from "@/pages/Dashboard";
 import Users from "@/pages/Users";
 import UserDetail from "@/pages/UserDetail";
 import Listings from "@/pages/Listings";
+import PostListing from "@/pages/PostListing";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/users" element={<Users />} />
             <Route path="/users/:id" element={<UserDetail />} />
+            <Route path="/listings/new" element={<PostListing />} />
             <Route path="/listings" element={<Listings />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />

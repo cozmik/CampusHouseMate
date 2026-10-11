@@ -23,7 +23,11 @@ export default function Conversation() {
   const messages = id ? getMessages(id) : [];
   const other = id ? getOtherParticipant(id) : undefined;
   const listing = conversation ? getListing(conversation.listingId) : undefined;
+  const showStudent = currentUser?.id !== conversation?.listerId && Boolean(listing?.contactName);
+  const displayName = showStudent ? listing?.contactName : other?.fullName;
+  const sharingStudentContact = Boolean(listing?.contactPhone || listing?.contactWhatsapp) && currentUser?.id === listing?.ownerId;
   const conversations = getMyConversations();
+  const isSelf = Boolean(conversation && conversation.seekerId === conversation.listerId);
   const isContactShared = conversation?.status === "contact_shared";
   const alreadyShared = messages.some((m) => m.type === "contact_share" && m.senderId === currentUser?.id);
 
@@ -53,7 +57,7 @@ export default function Conversation() {
   }
 
   const onSend = async () => {
-    if (!text.trim() || sending) return;
+    if (!text.trim() || sending || isSelf) return;
     setSending(true);
     const content = text;
     setText("");
@@ -81,11 +85,11 @@ export default function Conversation() {
           <header className="flex items-center gap-3 border-b border-border/70 bg-card px-3 py-2.5 lg:rounded-t-2xl">
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => navigate("/messages")}><ArrowLeft className="h-5 w-5" /></Button>
             <Avatar className="h-9 w-9">
-              <AvatarImage src={other?.avatarUrl} alt={other?.fullName} />
-              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">{other ? initials(other.fullName) : "?"}</AvatarFallback>
+              {!showStudent && other?.avatarUrl ? <AvatarImage src={other.avatarUrl} alt={displayName} /> : null}
+              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">{displayName ? initials(displayName) : "?"}</AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{other?.fullName ?? "Unknown"}</p>
+              <p className="truncate text-sm font-semibold">{displayName ?? "Unknown"}</p>
               {listing && (
                 <Link to={`/listings/${listing.id}`} className="flex items-center gap-1 truncate text-xs text-muted-foreground hover:text-primary">
                   <span className="truncate">{listing.title}</span><ExternalLink className="h-3 w-3 shrink-0" />
@@ -95,7 +99,7 @@ export default function Conversation() {
             {isContactShared && (
               <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-1 text-xs font-semibold text-success"><Check className="h-3 w-3" />Contact shared</span>
             )}
-            {other && (
+            {other && !isSelf && (
               <ReportDialog
                 targetType="user"
                 targetId={other.id}
@@ -122,24 +126,31 @@ export default function Conversation() {
             )}
           </div>
 
-          <div className="border-t border-border/70 bg-card px-3 pt-2">
-            {!isContactShared ? (
-              <button type="button" onClick={onShare} disabled={alreadyShared} className="flex w-full items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-left transition-colors hover:bg-primary/10 disabled:opacity-60">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Share2 className="h-4 w-4" /></span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-semibold text-primary">{alreadyShared ? "Waiting for them to share" : "Share your contact"}</span>
-                  <span className="block text-xs text-muted-foreground">{alreadyShared ? "You've shared yours — you'll see theirs once they tap share." : "Reveal your phone & WhatsApp so you both can move off-app."}</span>
-                </span>
-              </button>
-            ) : (
-              <div className="flex items-center gap-2 rounded-xl bg-success/10 px-3 py-2 text-xs text-success"><Check className="h-4 w-4 shrink-0" />Contact details have been shared — check the chat above.</div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 border-t border-border/70 bg-card p-3 lg:rounded-b-2xl">
-            <Input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void onSend(); } }} placeholder="Type a message…" className="h-10 rounded-full" />
-            <Button size="icon" className="h-10 w-10 shrink-0 rounded-full" onClick={() => void onSend()} disabled={!text.trim() || sending}><Send className="h-4 w-4" /></Button>
-          </div>
+          {isSelf ? (
+            <div className="border-t border-border/70 bg-card px-3 py-3 text-center text-sm text-muted-foreground lg:rounded-b-2xl">
+              You can't message yourself about your own listing.
+            </div>
+          ) : (
+            <>
+              <div className="border-t border-border/70 bg-card px-3 pt-2">
+                {!isContactShared ? (
+                  <button type="button" onClick={onShare} disabled={alreadyShared} className="flex w-full items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-left transition-colors hover:bg-primary/10 disabled:opacity-60">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Share2 className="h-4 w-4" /></span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-primary">{alreadyShared ? "Waiting for them to share" : sharingStudentContact ? "Share the student's contact" : "Share your contact"}</span>
+                      <span className="block text-xs text-muted-foreground">{alreadyShared ? "You've shared yours — you'll see theirs once they tap share." : sharingStudentContact ? "Sends the WhatsApp saved on this listing." : "Reveal your phone & WhatsApp so you both can move off-app."}</span>
+                    </span>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-xl bg-success/10 px-3 py-2 text-xs text-success"><Check className="h-4 w-4 shrink-0" />Contact details have been shared — check the chat above.</div>
+                )}
+              </div>
+              <div className="flex items-center gap-2 border-t border-border/70 bg-card p-3 lg:rounded-b-2xl">
+                <Input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void onSend(); } }} placeholder="Type a message…" className="h-10 rounded-full" />
+                <Button size="icon" className="h-10 w-10 shrink-0 rounded-full" onClick={() => void onSend()} disabled={!text.trim() || sending}><Send className="h-4 w-4" /></Button>
+              </div>
+            </>
+          )}
         </section>
       </div>
     </div>

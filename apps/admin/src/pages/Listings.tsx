@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Building2, Loader2, RefreshCw, Search } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Building2, Loader2, Plus, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import {
   fetchAllListings,
@@ -82,7 +83,8 @@ export default function Listings() {
           <div className="min-w-0 leading-tight">
             <p className="max-w-[20rem] truncate font-medium text-foreground">{l.title}</p>
             <p className="text-xs text-muted-foreground">
-              by {l.owner?.fullName || "unknown"}
+              by {l.contactName || l.owner?.fullName || "unknown"}
+              {l.contactName && l.owner?.fullName ? ` · chats to ${l.owner.fullName}` : ""}
             </p>
           </div>
         </div>
@@ -147,12 +149,20 @@ export default function Listings() {
     <div>
       <PageHeader
         title="Listings"
-        description="Review and moderate hostel listings"
+        description="Post a room for a student, or change a listing’s status"
         actions={
-          <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
+          <>
+            <Button size="sm" asChild>
+              <Link to="/listings/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Post listing
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </>
         }
       />
 

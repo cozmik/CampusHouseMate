@@ -3465,6 +3465,9 @@ export type Database = {
           state: string
           status: string
           title: string
+          contact_name: string | null
+          contact_phone: string | null
+          contact_whatsapp: string | null
         }
         Insert: {
           area?: string | null
@@ -3484,6 +3487,9 @@ export type Database = {
           state: string
           status?: string
           title: string
+          contact_name?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
         }
         Update: {
           area?: string | null
@@ -3503,6 +3509,9 @@ export type Database = {
           state?: string
           status?: string
           title?: string
+          contact_name?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
         }
         Relationships: [
           {

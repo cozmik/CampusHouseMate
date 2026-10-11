@@ -1,4 +1,6 @@
+import { getSchool, lgasForState } from "@housemates/shared-data";
 import type {
+  CreateAdminListingInput,
   Listing,
   ListingStatus,
   Profile,
@@ -11,6 +13,7 @@ import {
   mapProfile,
   mapReport,
   type RawListing,
+  type RawPhoto,
   type RawProfile,
   type RawReport,
 } from "./mappers";
@@ -245,6 +248,86 @@ export async function fetchAllListings(): Promise<AdminListing[]> {
 
 export async function updateListingStatus(id: string, status: ListingStatus): Promise<void> {
   await supabase.from("listings").update({ status }).eq("id", id);
+}
+
+export type { CreateAdminListingInput };
+
+export async function createAdminListing(input: CreateAdminListingInput): Promise<Listing> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const uploaderId = session?.user.id;
+  if (!uploaderId) throw new Error("Not signed in");
+  const school = getSchool(input.schoolId);
+  if (!school) throw new Error("Select a school.");
+  if (!lgasForState(school.state).includes(input.lga)) {
+    throw new Error("That LGA is not in the school's state.");
+  }
+
+  const photoUrls: { url: string; position: number }[] = [];
+  for (let i = 0; i < input.photos.length; i++) {
+    const photo = input.photos[i];
+    let url = photo.url;
+    if (photo.file) {
+      const ext = (photo.file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `${uploaderId}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("listing-photos").upload(path, photo.file, {
+        contentType: photo.file.type || "image/jpeg",
+        upsert: false,
+      });
+      if (error) throw new Error(error.message);
+      url = supabase.storage.from("listing-photos").getPublicUrl(path).data.publicUrl;
+    }
+    photoUrls.push({ url, position: i });
+  }
+
+  const { data: listingRow, error } = await supabase
+    .from("listings")
+    .insert({
+      owner_id: input.ownerId,
+      school_id: input.schoolId,
+      title: input.title.trim(),
+      description: input.description.trim() || null,
+      room_type: input.roomType,
+      gender_preference: input.genderPreference,
+      price: input.price,
+      price_period: input.pricePeriod,
+      state: school.state,
+      lga: input.lga,
+      area: input.area?.trim() || null,
+      available_from: input.availableFrom,
+      available_until: input.availableUntil || null,
+      status: "available",
+      contact_name: input.contactName.trim(),
+      contact_phone: input.contactPhone?.trim() || null,
+      contact_whatsapp: input.contactWhatsapp?.trim() || null,
+    })
+    .select("*")
+    .single();
+  if (error || !listingRow) throw new Error(error?.message ?? "Failed to create listing");
+
+  const row = listingRow as unknown as RawListing;
+  if (photoUrls.length) {
+    const { data: insertedPhotos, error: photoError } = await supabase
+      .from("listing_photos")
+      .insert(
+        photoUrls.map((photo) => ({
+          listing_id: row.id,
+          url: photo.url,
+          position: photo.position,
+        })),
+      )
+      .select("*");
+    if (photoError) {
+      await supabase.from("listings").delete().eq("id", row.id);
+      throw new Error(photoError.message);
+    }
+    row.listing_photos = (insertedPhotos ?? []) as unknown as RawPhoto[];
+  } else {
+    row.listing_photos = [];
+  }
+
+  return mapListing(row);
 }
 
 export async function fetchProfileById(id: string): Promise<Profile | null> {

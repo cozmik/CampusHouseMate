@@ -28,6 +28,9 @@ export interface RawListing {
   available_until: string | null;
   status: string;
   seeker_preferences: SeekerPreferences | null;
+  contact_name?: string | null;
+  contact_phone?: string | null;
+  contact_whatsapp?: string | null;
   created_at: string;
   listing_photos?: RawPhoto[];
 }
@@ -93,6 +96,9 @@ export function mapListing(row: RawListing): Listing {
     availableUntil: row.available_until ?? undefined,
     status: row.status as Listing["status"],
     seekerPreferences: row.seeker_preferences ?? undefined,
+    contactName: row.contact_name?.trim() || undefined,
+    contactPhone: row.contact_phone?.trim() || undefined,
+    contactWhatsapp: row.contact_whatsapp?.trim() || undefined,
     photos: photos
       .map((p) => ({ id: p.id, url: p.url, position: p.position }))
       .sort((a, b) => a.position - b.position),

@@ -302,6 +302,10 @@ export async function mockSupabase(page: Page, options: MockOptions = {}) {
     if (table === "conversations") {
       if (method === "POST") {
         const payload = asRows<Partial<RawConversation>>(parseJson(request))[0] ?? {};
+        if (payload.seeker_id && payload.seeker_id === payload.lister_id) {
+          await json(route, { message: "You can't message yourself.", code: "23514" }, {}, 400);
+          return;
+        }
         const existing = conversations.find(
           (c) => c.listing_id === payload.listing_id && c.seeker_id === payload.seeker_id,
         );

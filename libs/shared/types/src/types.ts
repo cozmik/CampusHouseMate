@@ -70,6 +70,9 @@ export interface Listing {
   availableUntil?: string;
   status: ListingStatus;
   seekerPreferences?: SeekerPreferences;
+  contactName?: string;
+  contactPhone?: string;
+  contactWhatsapp?: string;
   photos: ListingPhoto[];
   createdAt: string;
 }
@@ -113,6 +116,26 @@ export interface SavedListing {
   userId: string;
   listingId: string;
   createdAt: string;
+}
+
+export interface CreateAdminListingInput {
+  ownerId: string;
+  schoolId: string;
+  title: string;
+  description: string;
+  roomType: RoomType;
+  genderPreference: GenderPreference;
+  price: number;
+  pricePeriod: PricePeriod;
+  state: string;
+  lga: string;
+  area?: string;
+  availableFrom: string;
+  availableUntil?: string;
+  contactName: string;
+  contactPhone?: string;
+  contactWhatsapp?: string;
+  photos: { url: string; file?: File }[];
 }
 
 export interface ListingFilters {

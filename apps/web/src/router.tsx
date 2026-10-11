@@ -12,6 +12,7 @@ import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
 import AdminReports from "./pages/AdminReports";
 import AdminUsers from "./pages/AdminUsers";
+import AdminPostListing from "./pages/AdminPostListing";
 import VerifyEmail from "./pages/VerifyEmail";
 import AuthCallback from "./pages/AuthCallback";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -42,6 +43,7 @@ export const routers = [
   { path: "/profile", name: "profile", element: <AppLayout><ProtectedRoute><Profile /></ProtectedRoute></AppLayout> },
   { path: "/admin", name: "admin-index", element: <Navigate to="/admin/users" replace /> },
   { path: "/admin/users", name: "admin-users", element: <AdminRoute><AdminLayout><AdminUsers /></AdminLayout></AdminRoute> },
+  { path: "/admin/listings/new", name: "admin-post-listing", element: <AdminRoute><AdminLayout><AdminPostListing /></AdminLayout></AdminRoute> },
   { path: "/admin/reports", name: "admin-reports", element: <AdminRoute><AdminLayout><AdminReports /></AdminLayout></AdminRoute> },
   /* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */
   { path: "*", name: "404", element: <AppLayout><NotFound /></AppLayout> },

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Flag, LogOut, ShieldCheck, Users, ArrowLeft } from "lucide-react";
+import { Flag, LogOut, Plus, ShieldCheck, Users, ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@housemates/shared-ui/button";
 import { useApp } from "@/lib/store";
@@ -7,6 +7,7 @@ import { cn } from "@housemates/shared-utils";
 
 const navItems = [
   { to: "/admin/users", label: "Users", icon: Users },
+  { to: "/admin/listings/new", label: "Post listing", icon: Plus },
   { to: "/admin/reports", label: "Reports", icon: Flag },
 ];
 

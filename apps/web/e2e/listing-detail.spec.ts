@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures/test";
-import { makeListing } from "./fixtures/data";
+import { makeListing, TEST_USER } from "./fixtures/data";
 
 test.describe("Listing detail", () => {
   test.use({
@@ -26,5 +26,27 @@ test.describe("Listing detail", () => {
     await page.goto("/listings/does-not-exist");
     await expect(page.getByRole("heading", { name: "Listing not found" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Back to browse" })).toBeVisible();
+  });
+});
+
+test.describe("Own listing", () => {
+  test.use({
+    mockOptions: {
+      authenticated: true,
+      listings: [
+        makeListing(1, {
+          id: "listing-mine",
+          owner_id: TEST_USER.id,
+          title: "My room in Yaba",
+        }),
+      ],
+    },
+  });
+
+  test("hides express interest when the signed-in user owns the listing", async ({ page }) => {
+    await page.goto("/listings/listing-mine");
+    await expect(page.getByRole("heading", { name: "My room in Yaba" })).toBeVisible();
+    await expect(page.getByText("This is your listing")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Express interest" })).toHaveCount(0);
   });
 });

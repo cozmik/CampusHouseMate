@@ -10,7 +10,7 @@ import {
 } from "react";
 import { supabase } from "@housemates/shared-supabase";
 import { mapConversation, mapListing, mapMessage, mapProfile, mapReport, type Json, type RawConversation, type RawListing, type RawMessage, type RawPhoto, type RawProfile, type RawReport } from "@housemates/shared-supabase";
-import { schools as schoolsData, getSchool as getSchoolData } from "@housemates/shared-data";
+import { schools as schoolsData, getSchool as getSchoolData, lgasForState } from "@housemates/shared-data";
 import { toast } from "sonner";
 import { joinName, namesFromMetadata, splitFullName, uid } from "@housemates/shared-utils";
 import { captureEvent } from "@/lib/posthog";
@@ -137,6 +137,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   const listingsRef = useRef<Listing[]>([]);
   listingsRef.current = listings;
+  const conversationsRef = useRef<Conversation[]>([]);
+  conversationsRef.current = conversations;
   const savedListingsRef = useRef<SavedListing[]>([]);
   savedListingsRef.current = savedListings;
   const currentUserRef = useRef<Profile | null>(null);
@@ -680,6 +682,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (input: CreateListingInput): Promise<Listing> => {
       const ownerId = currentUser?.id;
       if (!ownerId) throw new Error("Not signed in");
+      const school = getSchoolData(input.schoolId);
+      if (!school) throw new Error("Select a school.");
+      if (!lgasForState(school.state).includes(input.lga)) {
+        throw new Error("That LGA is not in the school's state.");
+      }
       const photoUrls: { url: string; position: number }[] = [];
       for (let i = 0; i < input.photos.length; i++) {
         const p = input.photos[i];
@@ -713,7 +720,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           gender_preference: input.genderPreference,
           price: input.price,
           price_period: input.pricePeriod,
-          state: input.state,
+          state: school.state,
           lga: input.lga,
           area: input.area || null,
           available_from: input.availableFrom,
@@ -837,6 +844,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         listingsRef.current.find((l) => l.id === listingId) ??
         (await fetchListingById(listingId));
       if (!listing) return undefined;
+      if (currentUser.id === listing.ownerId) {
+        toast.error("You can't message yourself about your own listing.");
+        return undefined;
+      }
       const existed = conversations.find(
         (c) =>
           c.listingId === listingId && c.seekerId === currentUser.id,
@@ -889,7 +900,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [conversations, currentUser, fetchListingById],
   );
 
-  const getMyConversations = useCallback(() => conversations, [conversations]);
+  const getMyConversations = useCallback(
+    () => conversations.filter((c) => c.seekerId !== c.listerId),
+    [conversations],
+  );
 
   const getMessages = useCallback(
     (conversationId: string) =>
@@ -950,6 +964,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const sendMessage = useCallback(
     async (conversationId: string, content: string) => {
       if (!currentUser || !content.trim()) return;
+      const conv = conversationsRef.current.find((c) => c.id === conversationId);
+      if (conv && conv.seekerId === conv.listerId) {
+        toast.error("You can't message yourself.");
+        return;
+      }
       const tempId = uid("msg");
       const optimistic: Message = {
         id: tempId,
@@ -997,10 +1016,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (conversationId: string) => {
       if (!currentUser) return;
       const conv = conversations.find((c) => c.id === conversationId);
-      if (!conv || conv.status === "contact_shared") return;
-      const contact = [currentUser.phone, currentUser.whatsapp]
-        .filter(Boolean)
-        .join(" • ");
+      if (!conv || conv.status === "contact_shared" || conv.seekerId === conv.listerId) return;
+      let phone = currentUser.phone;
+      let whatsapp = currentUser.whatsapp;
+      let hosted = false;
+      if (conv.listerId === currentUser.id) {
+        const { data, error } = await supabase
+          .from("listings")
+          .select("contact_phone, contact_whatsapp")
+          .eq("id", conv.listingId)
+          .maybeSingle();
+        const row = data as { contact_phone: string | null; contact_whatsapp: string | null } | null;
+        if (!error && (row?.contact_phone || row?.contact_whatsapp)) {
+          phone = row.contact_phone ?? undefined;
+          whatsapp = row.contact_whatsapp ?? undefined;
+          hosted = true;
+        }
+      }
+      const contact = [phone, whatsapp].filter(Boolean).join(" • ");
       if (!contact) return;
       await supabase.from("messages").insert([
         {
@@ -1012,7 +1045,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         {
           conversation_id: conversationId,
           sender_id: currentUser.id,
-          content: "You shared your contact details.",
+          content: hosted
+            ? "You shared the student's contact details."
+            : "You shared your contact details.",
           type: "system",
         },
       ]);

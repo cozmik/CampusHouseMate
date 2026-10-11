@@ -145,7 +145,7 @@ export function ListingWizard() {
             <div className="grid grid-cols-2 gap-1 rounded-2xl bg-muted p-1">
               {([
                 { id: "school", label: "By School", icon: SchoolIcon },
-                { id: "location", label: "By Location", icon: MapPin },
+                { id: "location", label: "By State", icon: MapPin },
               ] as const).map((tab) => (
                 <button key={tab.id} type="button" onClick={() => switchMode(tab.id)} className={cn("inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all", postMode === tab.id ? "bg-card text-foreground shadow-card" : "text-muted-foreground hover:text-foreground")}>
                   <tab.icon className="h-4 w-4" />{tab.label}
@@ -212,7 +212,7 @@ export function ListingWizard() {
 
             <div className="space-y-1.5">
               <Label>Area / landmark (optional)</Label>
-              <Input value={form.area} onChange={(e) => set("area", e.target.value)} placeholder="e.g. Akoka, Mayfair, Bodija" />
+              <Input value={form.area} onChange={(e) => set("area", e.target.value)} placeholder="Neighbourhood or landmark" />
             </div>
           </div>
         )}
@@ -225,7 +225,7 @@ export function ListingWizard() {
             </div>
             <div className="space-y-1.5">
               <Label>Title</Label>
-              <Input value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="e.g. Bright self-con near the main gate" className={errors.title ? "border-destructive" : ""} />
+              <Input value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="Short title for the room" className={errors.title ? "border-destructive" : ""} />
               {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
             </div>
             <div className="space-y-1.5">
@@ -273,7 +273,7 @@ export function ListingWizard() {
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label>Price (₦)</Label>
-                <Input type="number" inputMode="numeric" min={0} step={1000} value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="e.g. 150000" className={errors.price ? "border-destructive" : ""} />
+                <Input type="number" inputMode="numeric" min={0} step={1000} value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="Amount in naira" className={errors.price ? "border-destructive" : ""} />
                 {errors.price && <p className="text-xs text-destructive">{errors.price}</p>}
               </div>
               <div className="space-y-1.5">

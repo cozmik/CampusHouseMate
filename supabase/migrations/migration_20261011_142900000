@@ -1,0 +1,33 @@
+-- A seeker and a lister on the same conversation must be two different accounts.
+
+delete from public.conversations
+where seeker_id = lister_id;
+
+alter table public.conversations
+  drop constraint if exists conversations_seeker_not_lister;
+
+alter table public.conversations
+  add constraint conversations_seeker_not_lister
+  check (seeker_id <> lister_id);
+
+drop policy if exists "conv_seeker_insert" on public.conversations;
+create policy "conv_seeker_insert" on public.conversations
+  for insert
+  with check (
+    auth.uid() = seeker_id
+    and seeker_id <> lister_id
+  );
+
+drop policy if exists "msg_participant_insert" on public.messages;
+create policy "msg_participant_insert" on public.messages
+  for insert
+  with check (
+    auth.uid() = sender_id
+    and exists (
+      select 1
+      from public.conversations c
+      where c.id = conversation_id
+        and c.seeker_id <> c.lister_id
+        and (c.seeker_id = auth.uid() or c.lister_id = auth.uid())
+    )
+  );
