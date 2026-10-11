@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Plus, Heart, MessageSquare, BedDouble, Search, ExternalLink, Loader2, Sparkles, ArrowRight } from "lucide-react";
+import { Plus, Heart, MessageSquare, BedDouble, Search, ExternalLink, Loader2, Sparkles, ArrowRight, Pencil, Trash2 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { Button } from "@housemates/shared-ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@housemates/shared-ui/avatar";
@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@housemates/shared-ui/
 import { ListingCard } from "@/components/housemate/ListingCard";
 import { StatusBadge } from "@/components/housemate/StatusBadge";
 import { ConversationListItem } from "@/components/housemate/ConversationListItem";
+import { DeleteListingButton } from "@/components/housemate/DeleteListingButton";
 import { cn } from "@housemates/shared-utils";
 import { formatPrice, initials, roomTypeLabel } from "@housemates/shared-utils";
 import type { Listing, ListingStatus } from "@housemates/shared-types";
@@ -78,7 +79,7 @@ export default function Dashboard() {
   if (!currentUser) return null;
 
   const myListings = listings
-    .filter((l) => l.ownerId === currentUser.id)
+    .filter((l) => l.ownerId === currentUser.id && !l.archivedAt)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const myInterests = getMyConversations().filter((c) => c.seekerId === currentUser.id);
   const saved = getSavedListings();
@@ -189,7 +190,14 @@ function ListingRow({ listing }: { listing: Listing }) {
             <button key={s} type="button" onClick={() => { void updateListingStatus(listing.id, s); }} className={cn("rounded-lg px-2.5 py-1 text-xs font-semibold capitalize transition-colors", listing.status === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground")}>{s}</button>
           ))}
         </div>
-        <Button asChild variant="ghost" size="sm" className="text-muted-foreground"><Link to={`/listings/${listing.id}`}>View<ExternalLink className="h-3.5 w-3.5" /></Link></Button>
+        <div className="flex gap-1">
+          <Button asChild variant="ghost" size="sm" className="text-muted-foreground"><Link to={`/listings/${listing.id}`}>View<ExternalLink className="h-3.5 w-3.5" /></Link></Button>
+          <Button asChild variant="ghost" size="sm" className="text-muted-foreground"><Link to={`/listings/${listing.id}/edit`} aria-label={`Edit ${listing.title}`}><Pencil className="h-3.5 w-3.5" />Edit</Link></Button>
+          <DeleteListingButton
+            listing={listing}
+            trigger={<Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" aria-label={`Delete ${listing.title}`}><Trash2 className="h-3.5 w-3.5" />Delete</Button>}
+          />
+        </div>
       </div>
     </div>
   );

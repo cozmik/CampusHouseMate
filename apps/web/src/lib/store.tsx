@@ -42,7 +42,7 @@ interface SignupInput {
   schoolId?: string;
 }
 
-interface CreateListingInput {
+export interface CreateListingInput {
   schoolId: string;
   title: string;
   description: string;
@@ -82,6 +82,8 @@ interface AppContextValue {
   fetchListings: (filters: ListingFilters, page?: number, pageSize?: number) => Promise<ListingPage>;
   fetchSchoolCounts: () => Promise<Record<string, number>>;
   createListing: (input: CreateListingInput) => Promise<Listing>;
+  updateListing: (id: string, input: CreateListingInput) => Promise<Listing>;
+  archiveListing: (id: string) => Promise<void>;
   updateListingStatus: (id: string, status: ListingStatus) => Promise<void>;
   filterListings: (filters: ListingFilters) => Listing[];
 
@@ -90,9 +92,11 @@ interface AppContextValue {
   getConversationForListing: (listingId: string) => Conversation | undefined;
   expressInterest: (listingId: string) => Promise<string | undefined>;
   getMyConversations: () => Conversation[];
+  isConversationUnread: (conversation: Conversation) => boolean;
+  unreadCount: number;
+  openConversation: (conversationId: string) => () => void;
   getMessages: (conversationId: string) => Message[];
   fetchMessages: (conversationId: string) => Promise<void>;
-  subscribeMessages: (conversationId: string) => () => void;
   sendMessage: (conversationId: string, content: string) => Promise<void>;
   shareContact: (conversationId: string) => Promise<void>;
   getOtherParticipant: (conversationId: string) => Profile | undefined;
@@ -120,6 +124,74 @@ interface AppContextValue {
 }
 
 export const LISTING_PAGE_SIZE = 12;
+
+const LISTING_PHOTOS_BUCKET = "listing-photos";
+const LISTING_PHOTOS_URL_MARKER = `/storage/v1/object/public/${LISTING_PHOTOS_BUCKET}/`;
+
+async function uploadListingPhotos(
+  ownerId: string,
+  photos: CreateListingInput["photos"],
+): Promise<{ url: string; position: number }[]> {
+  const out: { url: string; position: number }[] = [];
+  for (let i = 0; i < photos.length; i++) {
+    const p = photos[i];
+    let url = p.url;
+    if (p.file) {
+      const ext = (p.file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `${ownerId}/${uid("p")}.${ext}`;
+      const { error } = await supabase.storage
+        .from(LISTING_PHOTOS_BUCKET)
+        .upload(path, p.file, {
+          contentType: p.file.type || "image/jpeg",
+          upsert: false,
+        });
+      if (error) throw error;
+      const { data } = supabase.storage
+        .from(LISTING_PHOTOS_BUCKET)
+        .getPublicUrl(path);
+      url = data.publicUrl;
+    }
+    out.push({ url, position: i });
+  }
+  return out;
+}
+
+function listingPhotoPath(url: string): string | undefined {
+  const at = url.indexOf(LISTING_PHOTOS_URL_MARKER);
+  if (at < 0) return undefined;
+  return decodeURIComponent(url.slice(at + LISTING_PHOTOS_URL_MARKER.length).split("?")[0]);
+}
+
+function myLastReadAt(conv: Conversation, userId: string): string | undefined {
+  return conv.seekerId === userId ? conv.seekerLastReadAt : conv.listerLastReadAt;
+}
+
+function laterIso(a: string | undefined, b: string): string {
+  return a && new Date(a).getTime() > new Date(b).getTime() ? a : b;
+}
+
+// Timestamps only move forward, so a stale realtime event can't undo a local read.
+function mergeConversation(current: Conversation, incoming: Conversation): Conversation {
+  return {
+    ...incoming,
+    lastMessageAt: laterIso(current.lastMessageAt, incoming.lastMessageAt),
+    seekerLastReadAt: incoming.seekerLastReadAt
+      ? laterIso(current.seekerLastReadAt, incoming.seekerLastReadAt)
+      : current.seekerLastReadAt,
+    listerLastReadAt: incoming.listerLastReadAt
+      ? laterIso(current.listerLastReadAt, incoming.listerLastReadAt)
+      : current.listerLastReadAt,
+  };
+}
+
+function conversationUnreadFor(conv: Conversation, userId: string): boolean {
+  if (conv.seekerId === conv.listerId) return false;
+  // Rows without any read markers predate unread tracking.
+  if (!conv.seekerLastReadAt && !conv.listerLastReadAt) return false;
+  const lastRead = myLastReadAt(conv, userId);
+  if (!lastRead) return true;
+  return new Date(conv.lastMessageAt).getTime() > new Date(lastRead).getTime();
+}
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
@@ -289,11 +361,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       if (convs.length) {
         const convIds = convs.map((c) => c.id);
-        const { data: msgs } = await supabase
-          .from("messages")
-          .select("*")
-          .in("conversation_id", convIds)
-          .order("created_at", { ascending: true });
+        const latest = await supabase.rpc("get_latest_messages", {
+          conv_ids: convIds,
+        });
+        let msgs: unknown[] | null = latest.data;
+        if (latest.error) {
+          const { data } = await supabase
+            .from("messages")
+            .select("*")
+            .in("conversation_id", convIds)
+            .order("created_at", { ascending: true });
+          msgs = data;
+        }
         const byConv: Record<string, Message[]> = {};
         (msgs ?? []).forEach((m) => {
           const mapped = mapMessage(m as unknown as RawMessage);
@@ -301,7 +380,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
             ? [...byConv[mapped.conversationId], mapped]
             : [mapped];
         });
-        setMessagesByConv((prev) => ({ ...prev, ...byConv }));
+        setMessagesByConv((prev) => {
+          const next = { ...prev };
+          for (const [convId, list] of Object.entries(byConv)) {
+            if (!next[convId]?.length) next[convId] = list;
+          }
+          return next;
+        });
       }
 
       const listingIds = [...new Set(convs.map((c) => c.listingId))];
@@ -438,7 +523,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       try {
         let query = supabase
           .from("listings")
-          .select("*, listing_photos(*)", { count: "exact" });
+          .select("*, listing_photos(*)", { count: "exact" })
+          .is("archived_at", null);
 
         if (filters.schoolId) query = query.eq("school_id", filters.schoolId);
         if (filters.state) query = query.eq("state", filters.state);
@@ -521,6 +607,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .from("listings")
       .select("school_id")
       .eq("status", "available")
+      .is("archived_at", null)
       .order("created_at", { ascending: false })
       .limit(1000);
     const counts: Record<string, number> = {};
@@ -687,27 +774,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!lgasForState(school.state).includes(input.lga)) {
         throw new Error("That LGA is not in the school's state.");
       }
-      const photoUrls: { url: string; position: number }[] = [];
-      for (let i = 0; i < input.photos.length; i++) {
-        const p = input.photos[i];
-        let url = p.url;
-        if (p.file) {
-          const ext = (p.file.name.split(".").pop() || "jpg").toLowerCase();
-          const path = `${ownerId}/${uid("p")}.${ext}`;
-          const { error } = await supabase.storage
-            .from("listing-photos")
-            .upload(path, p.file, {
-              contentType: p.file.type || "image/jpeg",
-              upsert: false,
-            });
-          if (error) throw error;
-          const { data } = supabase.storage
-            .from("listing-photos")
-            .getPublicUrl(path);
-          url = data.publicUrl;
-        }
-        photoUrls.push({ url, position: i });
-      }
+      const photoUrls = await uploadListingPhotos(ownerId, input.photos);
 
       const { data: listingRow, error } = await supabase
         .from("listings")
@@ -775,9 +842,91 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const updateListing = useCallback(
+    async (id: string, input: CreateListingInput): Promise<Listing> => {
+      const editorId = currentUser?.id;
+      if (!editorId) throw new Error("Not signed in");
+      const school = getSchoolData(input.schoolId);
+      if (!school) throw new Error("Select a school.");
+      if (!lgasForState(school.state).includes(input.lga)) {
+        throw new Error("That LGA is not in the school's state.");
+      }
+      const before = listingsRef.current.find((l) => l.id === id);
+      const photoUrls = await uploadListingPhotos(editorId, input.photos);
+
+      const { data: listingRow, error } = await supabase
+        .from("listings")
+        .update({
+          school_id: input.schoolId,
+          title: input.title,
+          description: input.description,
+          room_type: input.roomType,
+          gender_preference: input.genderPreference,
+          price: input.price,
+          price_period: input.pricePeriod,
+          state: school.state,
+          lga: input.lga,
+          area: input.area || null,
+          available_from: input.availableFrom,
+          available_until: input.availableUntil || null,
+          seeker_preferences: (input.seekerPreferences ?? null) as unknown as Json,
+        })
+        .eq("id", id)
+        .select("*")
+        .single();
+      if (error || !listingRow) throw error ?? new Error("Failed to update listing");
+
+      const { error: clearError } = await supabase
+        .from("listing_photos")
+        .delete()
+        .eq("listing_id", id);
+      if (clearError) throw clearError;
+      let insertedPhotos: RawPhoto[] = [];
+      if (photoUrls.length) {
+        const { data, error: photoError } = await supabase
+          .from("listing_photos")
+          .insert(photoUrls.map((p) => ({ listing_id: id, url: p.url, position: p.position })))
+          .select("*");
+        if (photoError) throw photoError;
+        insertedPhotos = (data ?? []) as unknown as RawPhoto[];
+      }
+
+      const keptUrls = new Set(photoUrls.map((p) => p.url));
+      const removedPaths = (before?.photos ?? [])
+        .filter((p) => !keptUrls.has(p.url))
+        .map((p) => listingPhotoPath(p.url))
+        .filter((p): p is string => Boolean(p));
+      if (removedPaths.length) {
+        void supabase.storage.from(LISTING_PHOTOS_BUCKET).remove(removedPaths);
+      }
+
+      const row = listingRow as unknown as RawListing;
+      row.listing_photos = insertedPhotos;
+      const listing = mapListing(row);
+      mergeListings([listing]);
+      captureEvent("listing_updated", { listing_id: id });
+      return listing;
+    },
+    [currentUser?.id, mergeListings],
+  );
+
+  const archiveListing = useCallback(async (id: string) => {
+    const archivedAt = new Date().toISOString();
+    const { error } = await supabase
+      .from("listings")
+      .update({ archived_at: archivedAt })
+      .eq("id", id);
+    if (error) throw error;
+    setListings((prev) =>
+      prev.map((l) => (l.id === id ? { ...l, archivedAt } : l)),
+    );
+    captureEvent("listing_deleted", { listing_id: id });
+  }, []);
+
   const filterListings = useCallback(
     (filters: ListingFilters): Listing[] => {
       return listings.filter((l) => {
+        if (l.archivedAt) return false;
         if (filters.schoolId && l.schoolId !== filters.schoolId) return false;
         if (filters.state && l.state !== filters.state) return false;
         if (filters.lga && l.lga !== filters.lga) return false;
@@ -901,8 +1050,86 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const getMyConversations = useCallback(
-    () => conversations.filter((c) => c.seekerId !== c.listerId),
+    () =>
+      conversations
+        .filter((c) => c.seekerId !== c.listerId)
+        .sort(
+          (a, b) =>
+            new Date(b.lastMessageAt).getTime() -
+            new Date(a.lastMessageAt).getTime(),
+        ),
     [conversations],
+  );
+
+  const isConversationUnread = useCallback(
+    (conv: Conversation) =>
+      currentUser ? conversationUnreadFor(conv, currentUser.id) : false,
+    [currentUser],
+  );
+
+  const unreadCount = useMemo(
+    () => conversations.filter((c) => isConversationUnread(c)).length,
+    [conversations, isConversationUnread],
+  );
+
+  // Pass upTo when the caller already knows the newest message time; otherwise the
+  // conversation is only marked if it currently looks unread.
+  const markConversationRead = useCallback((conversationId: string, upTo?: string) => {
+    const me = currentUserRef.current?.id;
+    if (!me) return;
+    let until = upTo;
+    if (!until) {
+      const conv = conversationsRef.current.find((c) => c.id === conversationId);
+      if (!conv || !conversationUnreadFor(conv, me)) return;
+      until = conv.lastMessageAt;
+    }
+    const readAt = laterIso(until, new Date().toISOString());
+    setConversations((prev) =>
+      prev.map((c) => {
+        if (c.id !== conversationId) return c;
+        return c.seekerId === me
+          ? { ...c, seekerLastReadAt: laterIso(c.seekerLastReadAt, readAt) }
+          : { ...c, listerLastReadAt: laterIso(c.listerLastReadAt, readAt) };
+      }),
+    );
+    void supabase.rpc("mark_conversation_read", { conv_id: conversationId });
+  }, []);
+
+  const activeConversationRef = useRef<string | null>(null);
+
+  const openConversation = useCallback(
+    (conversationId: string) => {
+      activeConversationRef.current = conversationId;
+      markConversationRead(conversationId);
+      return () => {
+        if (activeConversationRef.current === conversationId) {
+          activeConversationRef.current = null;
+        }
+      };
+    },
+    [markConversationRead],
+  );
+
+  const loadConversation = useCallback(
+    async (conversationId: string) => {
+      const { data } = await supabase
+        .from("conversations")
+        .select("*")
+        .eq("id", conversationId)
+        .maybeSingle();
+      if (!data) return;
+      const conv = mapConversation(data as unknown as RawConversation);
+      setConversations((prev) =>
+        prev.some((c) => c.id === conv.id) ? prev : [conv, ...prev],
+      );
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", [conv.seekerId, conv.listerId]);
+      if (profs) cacheProfiles(profs as unknown as RawProfile[]);
+      void fetchListingById(conv.listingId);
+    },
+    [cacheProfiles, fetchListingById],
   );
 
   const getMessages = useCallback(
@@ -928,38 +1155,83 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  const subscribeMessages = useCallback((conversationId: string) => {
+  // One live feed for the whole inbox. RLS limits events to the user's own conversations.
+  const userId = currentUser?.id;
+  useEffect(() => {
+    if (!userId) return;
+
+    const onMessage = (msg: Message) => {
+      setMessagesByConv((prev) => {
+        const existing = prev[msg.conversationId] ?? [];
+        if (existing.some((m) => m.id === msg.id)) return prev;
+        return {
+          ...prev,
+          [msg.conversationId]: [...existing, msg].sort(
+            (a, b) =>
+              new Date(a.createdAt).getTime() -
+              new Date(b.createdAt).getTime(),
+          ),
+        };
+      });
+      const known = conversationsRef.current.some((c) => c.id === msg.conversationId);
+      if (!known) {
+        void loadConversation(msg.conversationId);
+        return;
+      }
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== msg.conversationId) return c;
+          const next = { ...c, lastMessageAt: laterIso(c.lastMessageAt, msg.createdAt) };
+          if (msg.senderId === userId) {
+            if (c.seekerId === userId) next.seekerLastReadAt = laterIso(c.seekerLastReadAt, msg.createdAt);
+            else next.listerLastReadAt = laterIso(c.listerLastReadAt, msg.createdAt);
+          }
+          return next;
+        }),
+      );
+      if (msg.senderId !== userId && activeConversationRef.current === msg.conversationId) {
+        markConversationRead(msg.conversationId, msg.createdAt);
+      }
+    };
+
+    const onConversation = (conv: Conversation) => {
+      const current = conversationsRef.current.find((c) => c.id === conv.id);
+      if (!current) {
+        void loadConversation(conv.id);
+        return;
+      }
+      const merged = mergeConversation(current, conv);
+      setConversations((prev) =>
+        prev.map((c) => (c.id === conv.id ? mergeConversation(c, conv) : c)),
+      );
+      if (
+        activeConversationRef.current === conv.id &&
+        conversationUnreadFor(merged, userId)
+      ) {
+        markConversationRead(conv.id, merged.lastMessageAt);
+      }
+    };
+
     const channel = supabase
-      .channel(`messages:${conversationId}`)
+      .channel(`inbox:${userId}`)
       .on(
         "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
+        { event: "INSERT", schema: "public", table: "messages" },
+        (payload) => onMessage(mapMessage(payload.new as unknown as RawMessage)),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "conversations" },
         (payload) => {
-          const msg = mapMessage(payload.new as unknown as RawMessage);
-          setMessagesByConv((prev) => {
-            const existing = prev[conversationId] ?? [];
-            if (existing.some((m) => m.id === msg.id)) return prev;
-            return {
-              ...prev,
-              [conversationId]: [...existing, msg].sort(
-                (a, b) =>
-                  new Date(a.createdAt).getTime() -
-                  new Date(b.createdAt).getTime(),
-              ),
-            };
-          });
+          if (payload.eventType === "DELETE") return;
+          onConversation(mapConversation(payload.new as unknown as RawConversation));
         },
       )
       .subscribe();
     return () => {
-      supabase.removeChannel(channel);
+      void supabase.removeChannel(channel);
     };
-  }, []);
+  }, [userId, loadConversation, markConversationRead]);
 
   const sendMessage = useCallback(
     async (conversationId: string, content: string) => {
@@ -994,12 +1266,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
         .single();
       if (!error && data) {
         const real = mapMessage(data as unknown as RawMessage);
-        setMessagesByConv((prev) => ({
-          ...prev,
-          [conversationId]: (prev[conversationId] ?? []).map((m) =>
-            m.id === tempId ? real : m,
-          ),
-        }));
+        setMessagesByConv((prev) => {
+          const list = prev[conversationId] ?? [];
+          const alreadyLive = list.some((m) => m.id === real.id);
+          return {
+            ...prev,
+            [conversationId]: alreadyLive
+              ? list.filter((m) => m.id !== tempId)
+              : list.map((m) => (m.id === tempId ? real : m)),
+          };
+        });
+        setConversations((prev) =>
+          prev.map((c) => {
+            if (c.id !== conversationId) return c;
+            const next = { ...c, lastMessageAt: laterIso(c.lastMessageAt, real.createdAt) };
+            if (c.seekerId === currentUser.id) next.seekerLastReadAt = laterIso(c.seekerLastReadAt, real.createdAt);
+            else next.listerLastReadAt = laterIso(c.listerLastReadAt, real.createdAt);
+            return next;
+          }),
+        );
       } else if (error) {
         setMessagesByConv((prev) => ({
           ...prev,
@@ -1142,7 +1427,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .filter((s) => s.userId === currentUser.id)
       .map((s) => s.listingId);
     return listings
-      .filter((l) => ids.includes(l.id))
+      .filter((l) => ids.includes(l.id) && !l.archivedAt)
       .sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -1242,6 +1527,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       fetchListings,
       fetchSchoolCounts,
       createListing,
+      updateListing,
+      archiveListing,
       updateListingStatus,
       filterListings,
       conversations,
@@ -1249,9 +1536,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       getConversationForListing,
       expressInterest,
       getMyConversations,
+      isConversationUnread,
+      unreadCount,
+      openConversation,
       getMessages,
       fetchMessages,
-      subscribeMessages,
       sendMessage,
       shareContact,
       getOtherParticipant,
@@ -1288,6 +1577,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       fetchListings,
       fetchSchoolCounts,
       createListing,
+      updateListing,
+      archiveListing,
       updateListingStatus,
       filterListings,
       conversations,
@@ -1295,9 +1586,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       getConversationForListing,
       expressInterest,
       getMyConversations,
+      isConversationUnread,
+      unreadCount,
+      openConversation,
       getMessages,
       fetchMessages,
-      subscribeMessages,
       sendMessage,
       shareContact,
       getOtherParticipant,

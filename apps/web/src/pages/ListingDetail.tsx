@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Heart, MapPin, CalendarDays, BedDouble, Users, MessageSquare, LayoutDashboard, ShieldCheck, Sparkles, Check, Clock, Flag, Loader2 } from "lucide-react";
+import { ArrowLeft, Heart, MapPin, CalendarDays, BedDouble, Users, MessageSquare, LayoutDashboard, ShieldCheck, Sparkles, Check, Clock, Flag, Loader2, Pencil, Trash2, Archive } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/lib/store";
 import { captureEvent } from "@/lib/posthog";
@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@housemates/shared-ui/avata
 import { PhotoGallery } from "@/components/housemate/PhotoGallery";
 import { StatusBadge } from "@/components/housemate/StatusBadge";
 import { ReportDialog } from "@/components/housemate/ReportDialog";
+import { DeleteListingButton } from "@/components/housemate/DeleteListingButton";
 import { formatDate, formatPrice, genderLabel, initials, periodLabelLong, roomTypeLabel } from "@housemates/shared-utils";
 import { cn } from "@housemates/shared-utils";
 import type { ListingStatus } from "@housemates/shared-types";
@@ -66,6 +67,7 @@ export default function ListingDetail() {
   const owner = getProfile(listing.ownerId);
   const school = getSchool(listing.schoolId);
   const isOwner = currentUser?.id === listing.ownerId;
+  const archived = Boolean(listing.archivedAt);
   const saved = isSaved(listing.id);
   const existingConv = getConversationForListing(listing.id);
   const prefs = listing.seekerPreferences;
@@ -141,9 +143,21 @@ export default function ListingDetail() {
                 <span className="text-2xl font-extrabold">{formatPrice(listing.price, listing.pricePeriod)}</span>
                 <Button variant="outline" size="icon" onClick={onSave} className={cn("h-9 w-9 rounded-full", saved && "border-primary text-primary")}><Heart className={cn("h-4 w-4", saved && "fill-current")} /></Button>
               </div>
-              {isOwner ? (
+              {archived ? (
+                <p className="mt-4 flex items-center justify-center gap-1.5 rounded-lg bg-secondary/60 p-2.5 text-center text-xs font-medium text-muted-foreground">
+                  <Archive className="h-3.5 w-3.5" />This listing has been removed
+                </p>
+              ) : isOwner ? (
                 <div className="mt-4 space-y-3">
                   <p className="rounded-lg bg-secondary/60 p-2.5 text-center text-xs font-medium text-muted-foreground">This is your listing</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button asChild variant="outline"><Link to={`/listings/${listing.id}/edit`}><Pencil className="h-4 w-4" />Edit</Link></Button>
+                    <DeleteListingButton
+                      listing={listing}
+                      onDeleted={() => navigate("/dashboard")}
+                      trigger={<Button variant="outline" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" />Delete</Button>}
+                    />
+                  </div>
                   <div>
                     <p className="mb-1.5 text-xs font-semibold uppercase text-muted-foreground">Update status</p>
                     <div className="grid grid-cols-3 gap-1.5">
@@ -180,7 +194,7 @@ export default function ListingDetail() {
                   {!listing.contactName && owner?.bio && <p className="mt-2 text-xs text-muted-foreground">{owner.bio}</p>}
                 </div>
               )}
-              {!isOwner && (
+              {!isOwner && !archived && (
                 <ReportDialog
                   targetType="listing"
                   targetId={listing.id}

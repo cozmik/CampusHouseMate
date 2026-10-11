@@ -3388,25 +3388,34 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          last_message_at: string
           lister_id: string
+          lister_last_read_at: string | null
           listing_id: string
           seeker_id: string
+          seeker_last_read_at: string | null
           status: string
         }
         Insert: {
           created_at?: string
           id?: string
+          last_message_at?: string
           lister_id: string
+          lister_last_read_at?: string | null
           listing_id: string
           seeker_id: string
+          seeker_last_read_at?: string | null
           status?: string
         }
         Update: {
           created_at?: string
           id?: string
+          last_message_at?: string
           lister_id?: string
+          lister_last_read_at?: string | null
           listing_id?: string
           seeker_id?: string
+          seeker_last_read_at?: string | null
           status?: string
         }
         Relationships: [
@@ -3448,6 +3457,7 @@ export type Database = {
       }
       listings: {
         Row: {
+          archived_at: string | null
           area: string | null
           available_from: string
           available_until: string | null
@@ -3470,6 +3480,7 @@ export type Database = {
           contact_whatsapp: string | null
         }
         Insert: {
+          archived_at?: string | null
           area?: string | null
           available_from: string
           available_until?: string | null
@@ -3492,6 +3503,7 @@ export type Database = {
           contact_whatsapp?: string | null
         }
         Update: {
+          archived_at?: string | null
           area?: string | null
           available_from?: string
           available_until?: string | null
@@ -3692,7 +3704,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_latest_messages: {
+        Args: { conv_ids: string[] }
+        Returns: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          sender_id: string
+          type: string
+        }[]
+      }
+      mark_conversation_read: {
+        Args: { conv_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

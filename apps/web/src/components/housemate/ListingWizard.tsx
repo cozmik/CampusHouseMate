@@ -11,7 +11,7 @@ import { useApp } from "@/lib/store";
 import { PRICE_PERIODS, ROOM_TYPES, formatPrice, genderLabel, periodLabelLong, roomTypeLabel } from "@housemates/shared-utils";
 import { lgasForState, stateNames } from "@housemates/shared-data";
 import { cn } from "@housemates/shared-utils";
-import type { GenderPreference, PricePeriod, RoomType, SeekerPreferences } from "@housemates/shared-types";
+import type { GenderPreference, Listing, PricePeriod, RoomType, SeekerPreferences } from "@housemates/shared-types";
 import { SchoolCombobox } from "./SchoolCombobox";
 import { PhotoUploader, type UploadingPhoto } from "./PhotoUploader";
 import { SeekerPreferencesInput } from "./SeekerPreferencesInput";
@@ -49,12 +49,32 @@ const initialState: WizardState = {
   photos: [], price: "", pricePeriod: "session", availableFrom: "", availableUntil: "",
 };
 
-export function ListingWizard() {
-  const { createListing, getSchool } = useApp();
+function stateFromListing(listing: Listing): WizardState {
+  return {
+    schoolId: listing.schoolId,
+    state: listing.state,
+    lga: lgasForState(listing.state).includes(listing.lga) ? listing.lga : "",
+    area: listing.area ?? "",
+    title: listing.title,
+    description: listing.description,
+    roomType: listing.roomType,
+    genderPreference: listing.genderPreference,
+    seekerPreferences: listing.seekerPreferences ?? { tags: [], note: undefined },
+    photos: listing.photos.map((p) => ({ url: p.url })),
+    price: String(listing.price),
+    pricePeriod: listing.pricePeriod,
+    availableFrom: listing.availableFrom,
+    availableUntil: listing.availableUntil ?? "",
+  };
+}
+
+export function ListingWizard({ listing }: { listing?: Listing } = {}) {
+  const { createListing, updateListing, getSchool } = useApp();
   const navigate = useNavigate();
+  const isEdit = Boolean(listing);
   const [step, setStep] = useState(0);
   const [postMode, setPostMode] = useState<PostMode>("school");
-  const [form, setForm] = useState<WizardState>(initialState);
+  const [form, setForm] = useState<WizardState>(() => (listing ? stateFromListing(listing) : initialState));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -84,10 +104,12 @@ export function ListingWizard() {
   };
 
   const submit = async () => {
-    if (!validateStep(3)) { setStep(3); return; }
+    for (const s of [0, 1, 2, 3]) {
+      if (!validateStep(s)) { setStep(s); return; }
+    }
     setSubmitting(true);
     try {
-      const listing = await createListing({
+      const input = {
         schoolId: form.schoolId,
         title: form.title,
         description: form.description,
@@ -102,12 +124,13 @@ export function ListingWizard() {
         availableUntil: form.availableUntil || undefined,
         seekerPreferences: form.seekerPreferences.tags.length || form.seekerPreferences.note ? form.seekerPreferences : undefined,
         photos: form.photos,
-      });
-      toast.success("Listing posted!");
-      navigate(`/listings/${listing.id}`);
+      };
+      const saved = listing ? await updateListing(listing.id, input) : await createListing(input);
+      toast.success(listing ? "Listing updated" : "Listing posted!");
+      navigate(`/listings/${saved.id}`);
     } catch (err) {
       setSubmitting(false);
-      toast.error("Could not post listing", { description: err instanceof Error ? err.message : undefined });
+      toast.error(listing ? "Could not save changes" : "Could not post listing", { description: err instanceof Error ? err.message : undefined });
     }
   };
 
@@ -120,7 +143,7 @@ export function ListingWizard() {
         <div className="flex items-center justify-between">
           {STEPS.map((s, i) => (
             <div key={s.key} className="flex flex-1 items-center last:flex-none">
-               <button type="button" onClick={() => i < step && setStep(i)} disabled={i > step} className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-xs font-semibold transition-colors sm:h-9 sm:w-9 sm:text-sm", i < step && "border-primary bg-primary text-primary-foreground", i === step && "border-primary bg-card text-primary", i > step && "border-border bg-card text-muted-foreground")}>
+               <button type="button" onClick={() => (isEdit || i < step) && setStep(i)} disabled={!isEdit && i > step} aria-label={s.title} className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-xs font-semibold transition-colors sm:h-9 sm:w-9 sm:text-sm", i < step && "border-primary bg-primary text-primary-foreground", i === step && "border-primary bg-card text-primary", i > step && "border-border bg-card text-muted-foreground")}>
                 {i < step ? <Check className="h-4 w-4" /> : i + 1}
               </button>
               {i < STEPS.length - 1 && <div className={cn("mx-1 h-0.5 flex-1 rounded-full transition-colors", i < step ? "bg-primary" : "bg-border")} />}
@@ -306,7 +329,7 @@ export function ListingWizard() {
           <div className="space-y-4">
             <div>
               <h2 className="text-xl font-bold">Review your listing</h2>
-              <p className="text-sm text-muted-foreground">Make sure everything looks right before posting.</p>
+              <p className="text-sm text-muted-foreground">Make sure everything looks right before {isEdit ? "saving" : "posting"}.</p>
             </div>
             <div className="overflow-hidden rounded-2xl border border-border">
               {form.photos[0] && (
@@ -342,7 +365,7 @@ export function ListingWizard() {
             <Button onClick={next}>Continue<ArrowRight className="h-4 w-4" /></Button>
           ) : (
             <Button onClick={submit} disabled={submitting}>
-              <CheckCircle2 className="h-4 w-4" />{submitting ? "Posting…" : "Post listing"}
+              <CheckCircle2 className="h-4 w-4" />{isEdit ? (submitting ? "Saving…" : "Save changes") : (submitting ? "Posting…" : "Post listing")}
             </Button>
           )}
         </div>

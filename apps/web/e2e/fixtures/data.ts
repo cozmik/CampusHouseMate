@@ -27,6 +27,7 @@ export type RawListing = {
   status: string;
   seeker_preferences: null;
   created_at: string;
+  archived_at?: string | null;
   listing_photos: { id: string; url: string; position: number }[];
 };
 
@@ -70,6 +71,9 @@ export type RawConversation = {
   lister_id: string;
   status: string;
   created_at: string;
+  last_message_at?: string;
+  seeker_last_read_at?: string | null;
+  lister_last_read_at?: string | null;
 };
 
 export type RawSavedListing = {
@@ -98,6 +102,20 @@ export function makeConversation(
     lister_id: patch.lister_id ?? OWNER_ID,
     status: patch.status ?? "active",
     created_at: patch.created_at ?? new Date().toISOString(),
+    ...(patch.last_message_at ? { last_message_at: patch.last_message_at } : {}),
+    ...(patch.seeker_last_read_at !== undefined ? { seeker_last_read_at: patch.seeker_last_read_at } : {}),
+    ...(patch.lister_last_read_at !== undefined ? { lister_last_read_at: patch.lister_last_read_at } : {}),
+  };
+}
+
+export function makeMessage(patch: Partial<RawMessage> & { conversation_id: string }): RawMessage {
+  return {
+    id: patch.id ?? `msg-${patch.conversation_id}-${Math.random().toString(36).slice(2, 8)}`,
+    sender_id: patch.sender_id ?? OWNER_ID,
+    content: patch.content ?? "Hi there",
+    type: patch.type ?? "text",
+    created_at: patch.created_at ?? new Date().toISOString(),
+    ...patch,
   };
 }
 

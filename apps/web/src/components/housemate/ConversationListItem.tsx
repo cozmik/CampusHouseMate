@@ -7,7 +7,7 @@ import { formatDate, timeAgo } from "@housemates/shared-utils";
 import type { Conversation } from "@housemates/shared-types";
 
 export function ConversationListItem({ conversation, isActive }: { conversation: Conversation; isActive?: boolean }) {
-  const { getOtherParticipant, getListing, getMessages, currentUser } = useApp();
+  const { getOtherParticipant, getListing, getMessages, currentUser, isConversationUnread } = useApp();
   const other = getOtherParticipant(conversation.id);
   const listing = getListing(conversation.listingId);
   const showStudent = currentUser?.id !== conversation.listerId && Boolean(listing?.contactName);
@@ -15,6 +15,7 @@ export function ConversationListItem({ conversation, isActive }: { conversation:
   const msgs = getMessages(conversation.id);
   const last = msgs[msgs.length - 1];
   const isContactShared = conversation.status === "contact_shared";
+  const unread = !isActive && isConversationUnread(conversation);
 
   const lastPreview = last
     ? last.type === "contact_share"
@@ -37,10 +38,18 @@ export function ConversationListItem({ conversation, isActive }: { conversation:
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <span className="truncate font-semibold">{displayName ?? "Unknown"}</span>
-          <span className="shrink-0 text-[11px] text-muted-foreground">{last ? timeAgo(last.createdAt) : formatDate(conversation.createdAt)}</span>
+          <span className={cn("truncate", unread ? "font-bold" : "font-semibold")}>{displayName ?? "Unknown"}</span>
+          <span className={cn("shrink-0 text-[11px]", unread ? "font-semibold text-primary" : "text-muted-foreground")}>{last ? timeAgo(last.createdAt) : formatDate(conversation.createdAt)}</span>
         </div>
-        <p className="truncate text-sm text-muted-foreground">{lastPreview}</p>
+        <div className="flex items-center gap-2">
+          <p className={cn("min-w-0 flex-1 truncate text-sm", unread ? "font-medium text-foreground" : "text-muted-foreground")}>{lastPreview}</p>
+          {unread && (
+            <>
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary" aria-hidden />
+              <span className="sr-only">Unread</span>
+            </>
+          )}
+        </div>
         {listing && (
           <Badge variant="secondary" className="mt-1 truncate text-[10px] font-normal">{listing.title}</Badge>
         )}

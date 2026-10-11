@@ -1,25 +1,25 @@
 # TODO
 
-## 1. Unread counts and a live inbox (~1.5 days)
+## 1. Unread counts and a live inbox (done, needs migration 20261011_153000000 applied)
 
-- [ ] Migration: add `seeker_last_read_at` and `lister_last_read_at` to `conversations`
-- [ ] Migration: add `last_message_at` to `conversations`, kept current by a trigger on `messages` insert; sort the inbox by it
-- [ ] Store: one realtime subscription for new messages across all of the user's conversations (replaces the per-chat subscription)
-- [ ] Store: mark a conversation read when it is opened and when new messages arrive while it is open
-- [ ] Store: on login, load only the latest message per conversation instead of every message
-- [ ] UI: unread badge on the Chats tab (`BottomNav`) and the desktop Messages link
-- [ ] UI: bold / highlighted unread rows in `ConversationListItem`
-- [ ] E2E: unread badge appears and clears after opening the chat
+- [x] Migration: add `seeker_last_read_at` and `lister_last_read_at` to `conversations`
+- [x] Migration: add `last_message_at` to `conversations`, kept current by a trigger on `messages` insert; sort the inbox by it
+- [x] Store: one realtime subscription for new messages across all of the user's conversations (replaces the per-chat subscription)
+- [x] Store: mark a conversation read when it is opened and when new messages arrive while it is open
+- [x] Store: on login, load only the latest message per conversation instead of every message
+- [x] UI: unread badge on the Chats tab (`BottomNav`) and the desktop Messages link
+- [x] UI: bold / highlighted unread rows in `ConversationListItem`
+- [x] E2E: unread badge appears and clears after opening the chat
 
-## 2. Edit and delete listings (~1.5 days)
+## 2. Edit and delete listings (done, needs migration 20261011_153100000 applied)
 
-- [ ] `ListingWizard`: accept an existing listing and save changes instead of creating
-- [ ] Store: `updateListing` (fields + photos: add, remove, reorder)
-- [ ] Remove deleted photos from the `listing-photos` storage bucket
-- [ ] Route `/listings/:id/edit`, owner-only
-- [ ] Edit and Delete buttons on the listing page and Dashboard
-- [ ] Soft delete (`archived_at`) so existing conversations survive; hide archived listings from browse and search
-- [ ] E2E: edit a listing, delete a listing
+- [x] `ListingWizard`: accept an existing listing and save changes instead of creating
+- [x] Store: `updateListing` (fields + photos: add, remove, reorder)
+- [x] Remove deleted photos from the `listing-photos` storage bucket
+- [x] Route `/listings/:id/edit`, owner-only
+- [x] Edit and Delete buttons on the listing page and Dashboard
+- [x] Soft delete (`archived_at`) so existing conversations survive; hide archived listings from browse and search
+- [x] E2E: edit a listing, delete a listing
 
 ## 3. Email notifications (1.5–2 days)
 

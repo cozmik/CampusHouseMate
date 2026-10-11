@@ -75,6 +75,7 @@ export interface Listing {
   contactWhatsapp?: string;
   photos: ListingPhoto[];
   createdAt: string;
+  archivedAt?: string;
 }
 
 export interface Profile {
@@ -109,6 +110,9 @@ export interface Conversation {
   listerId: string;
   status: ConversationStatus;
   createdAt: string;
+  lastMessageAt: string;
+  seekerLastReadAt?: string;
+  listerLastReadAt?: string;
 }
 
 export interface SavedListing {

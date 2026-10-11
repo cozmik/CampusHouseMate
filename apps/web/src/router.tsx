@@ -4,6 +4,7 @@ import NotFound from "./pages/NotFound";
 import Browse from "./pages/Browse";
 import ListingDetail from "./pages/ListingDetail";
 import PostListing from "./pages/PostListing";
+import EditListing from "./pages/EditListing";
 import Messages from "./pages/Messages";
 import Conversation from "./pages/Conversation";
 import Dashboard from "./pages/Dashboard";
@@ -36,6 +37,7 @@ export const routers = [
   { path: "/", name: "home", element: <AppLayout><Index /></AppLayout> },
   { path: "/browse", name: "browse", element: <AppLayout><Browse /></AppLayout> },
   { path: "/listings/:id", name: "listing", element: <AppLayout><ListingDetail /></AppLayout> },
+  { path: "/listings/:id/edit", name: "edit-listing", element: <AppLayout><ProtectedRoute><EditListing /></ProtectedRoute></AppLayout> },
   { path: "/post", name: "post", element: <AppLayout><ProtectedRoute><PostListing /></ProtectedRoute></AppLayout> },
   { path: "/messages", name: "messages", element: <AppLayout><ProtectedRoute><Messages /></ProtectedRoute></AppLayout> },
   { path: "/messages/:id", name: "conversation", element: <AppLayout><ProtectedRoute><Conversation /></ProtectedRoute></AppLayout> },

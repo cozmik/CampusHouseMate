@@ -7,6 +7,7 @@ export type MockOptions = {
   authenticated?: boolean;
   conversations?: import("./data").RawConversation[];
   savedListings?: import("./data").RawSavedListing[];
+  messages?: import("./data").RawMessage[];
 };
 
 export const test = base.extend<{ mockOptions: MockOptions; mockApi: void }>({

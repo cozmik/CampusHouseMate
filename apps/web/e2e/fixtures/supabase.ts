@@ -17,6 +17,7 @@ type MockOptions = {
   authenticated?: boolean;
   conversations?: RawConversation[];
   savedListings?: RawSavedListing[];
+  messages?: RawMessage[];
 };
 
 function parseEq(value: string | null): string | undefined {
@@ -35,6 +36,9 @@ function parseIn(value: string | null): string[] | undefined {
 
 function applyListingFilters(rows: RawListing[], url: URL): RawListing[] {
   let next = [...rows];
+  if (url.searchParams.get("archived_at") === "is.null") {
+    next = next.filter((r) => !r.archived_at);
+  }
   const status = parseEq(url.searchParams.get("status"));
   if (status) next = next.filter((r) => r.status === status);
   const schoolId = parseEq(url.searchParams.get("school_id"));
@@ -115,14 +119,26 @@ export async function mockSupabase(page: Page, options: MockOptions = {}) {
   }
   const conversations: RawConversation[] = [...(options.conversations ?? [])];
   const savedListings: RawSavedListing[] = [...(options.savedListings ?? [])];
-  const messages: RawMessage[] = conversations.map((c) => ({
-    id: `msg-seed-${c.id}`,
-    conversation_id: c.id,
-    sender_id: c.seeker_id,
-    content: "You started a conversation about this listing.",
-    type: "system",
-    created_at: c.created_at,
-  }));
+  const messages: RawMessage[] = options.messages
+    ? [...options.messages]
+    : conversations.map((c) => ({
+        id: `msg-seed-${c.id}`,
+        conversation_id: c.id,
+        sender_id: c.seeker_id,
+        content: "You started a conversation about this listing.",
+        type: "system",
+        created_at: c.created_at,
+      }));
+
+  // Mirrors the messages_after_insert trigger.
+  function recordMessage(row: RawMessage) {
+    messages.push(row);
+    const conv = conversations.find((c) => c.id === row.conversation_id);
+    if (!conv) return;
+    conv.last_message_at = row.created_at;
+    if (row.sender_id === conv.seeker_id) conv.seeker_last_read_at = row.created_at;
+    if (row.sender_id === conv.lister_id) conv.lister_last_read_at = row.created_at;
+  }
   const session = options.authenticated ? sessionPayload() : null;
   let seq = 1;
 
@@ -241,6 +257,31 @@ export async function mockSupabase(page: Page, options: MockOptions = {}) {
     const accept = request.headers()["accept"] ?? "";
     const wantsObject = accept.includes("vnd.pgrst.object+json");
 
+    if (table === "rpc") {
+      const fn = path.split("/").pop();
+      const body = (parseJson(request) ?? {}) as { conv_ids?: string[]; conv_id?: string };
+      if (fn === "get_latest_messages") {
+        const latest = new Map<string, RawMessage>();
+        for (const m of messages) {
+          if (!body.conv_ids?.includes(m.conversation_id)) continue;
+          const prev = latest.get(m.conversation_id);
+          if (!prev || prev.created_at < m.created_at) latest.set(m.conversation_id, m);
+        }
+        await json(route, [...latest.values()]);
+        return;
+      }
+      if (fn === "mark_conversation_read") {
+        const now = new Date().toISOString();
+        const conv = conversations.find((c) => c.id === body.conv_id);
+        if (conv?.seeker_id === TEST_USER.id) conv.seeker_last_read_at = now;
+        if (conv?.lister_id === TEST_USER.id) conv.lister_last_read_at = now;
+        await json(route, now);
+        return;
+      }
+      await json(route, { message: `Unknown function ${fn}` }, {}, 404);
+      return;
+    }
+
     if (table === "listings") {
       if (method === "POST") {
         const payload = asRows<Partial<RawListing>>(parseJson(request))[0] ?? {};
@@ -293,6 +334,13 @@ export async function mockSupabase(page: Page, options: MockOptions = {}) {
         const listing = listings.find((l) => l.id === rows[0]?.listing_id);
         if (listing) listing.listing_photos = rows;
         await json(route, wantsObject ? rows[0] : rows);
+        return;
+      }
+      if (method === "DELETE") {
+        const listingId = parseEq(url.searchParams.get("listing_id"));
+        const listing = listings.find((l) => l.id === listingId);
+        if (listing) listing.listing_photos = [];
+        await json(route, []);
         return;
       }
       await json(route, []);
@@ -373,7 +421,7 @@ export async function mockSupabase(page: Page, options: MockOptions = {}) {
           type: String(payload.type ?? "text"),
           created_at: new Date().toISOString(),
         };
-        messages.push(row);
+        recordMessage(row);
         await json(route, wantsObject ? row : [row]);
         return;
       }

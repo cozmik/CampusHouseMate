@@ -2,15 +2,16 @@ import { NavLink } from "react-router-dom";
 import { Home, Plus, Search, MessageSquare, LayoutDashboard } from "lucide-react";
 import { cn } from "@housemates/shared-utils";
 import { useApp } from "@/lib/store";
+import { UnreadBadge } from "./UnreadBadge";
 
 export function BottomNav() {
-  const { currentUser } = useApp();
+  const { currentUser, unreadCount } = useApp();
   const items = [
     { to: "/", label: "Home", icon: Home, end: true },
     { to: "/browse", label: "Browse", icon: Search, end: false },
     { to: "/post", label: "Post", icon: Plus, end: false, center: true },
     ...(currentUser
-      ? [{ to: "/messages", label: "Chats", icon: MessageSquare, end: false }]
+      ? [{ to: "/messages", label: "Chats", icon: MessageSquare, end: false, badge: unreadCount }]
       : []),
     { to: "/dashboard", label: "You", icon: LayoutDashboard, end: false },
   ];
@@ -22,10 +23,11 @@ export function BottomNav() {
           const content = (
             <span className="flex flex-col items-center gap-0.5">
               <span className={cn(
-                "grid h-7 w-7 place-items-center rounded-lg transition-colors",
+                "relative grid h-7 w-7 place-items-center rounded-lg transition-colors",
                 "center" in item && item.center ? "bg-primary text-primary-foreground shadow-glow" : "text-muted-foreground",
               )}>
                 <item.icon className="h-5 w-5" />
+                {"badge" in item && <UnreadBadge count={item.badge ?? 0} className="absolute -right-2 -top-1.5" />}
               </span>
               <span className="text-[10px] font-medium text-muted-foreground">{item.label}</span>
             </span>

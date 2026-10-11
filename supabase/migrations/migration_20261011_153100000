@@ -1,0 +1,42 @@
+-- Soft delete for listings. Archived listings disappear from browse and search
+-- but stay readable to their owner, chat participants and admins, so existing
+-- conversations keep their context.
+
+alter table public.listings
+  add column if not exists archived_at timestamptz;
+
+create index if not exists listings_active_created_idx
+  on public.listings(created_at desc)
+  where archived_at is null;
+
+drop policy if exists "listings_public_read" on public.listings;
+create policy "listings_public_read" on public.listings
+  for select
+  using (
+    archived_at is null
+    or owner_id = auth.uid()
+    or exists (
+      select 1 from public.conversations c
+      where c.listing_id = listings.id
+        and auth.uid() in (c.seeker_id, c.lister_id)
+    )
+    or exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid() and p.is_admin = true
+    )
+  );
+
+-- New chats must target a live listing, and the lister must be its owner.
+drop policy if exists "conv_seeker_insert" on public.conversations;
+create policy "conv_seeker_insert" on public.conversations
+  for insert
+  with check (
+    auth.uid() = seeker_id
+    and seeker_id <> lister_id
+    and exists (
+      select 1 from public.listings l
+      where l.id = listing_id
+        and l.owner_id = lister_id
+        and l.archived_at is null
+    )
+  );

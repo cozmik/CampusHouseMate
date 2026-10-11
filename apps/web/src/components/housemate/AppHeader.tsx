@@ -8,9 +8,10 @@ import { initials } from "@housemates/shared-utils";
 import { cn } from "@housemates/shared-utils";
 import { Logo } from "./Logo";
 import { ReportDialog } from "./ReportDialog";
+import { UnreadBadge } from "./UnreadBadge";
 
 export function AppHeader() {
-  const { currentUser, logout } = useApp();
+  const { currentUser, logout, unreadCount } = useApp();
   const navigate = useNavigate();
 
   return (
@@ -21,7 +22,7 @@ export function AppHeader() {
           {[
             { to: "/browse", label: "Browse", icon: Search },
             { to: "/post", label: "Post a space", icon: Plus },
-            ...(currentUser ? [{ to: "/messages", label: "Messages", icon: MessageSquare }] : []),
+            ...(currentUser ? [{ to: "/messages", label: "Messages", icon: MessageSquare, badge: unreadCount }] : []),
             { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
           ].map((item) => (
             <NavLink
@@ -36,6 +37,7 @@ export function AppHeader() {
             >
               <item.icon className="h-4 w-4" />
               {item.label}
+              {"badge" in item && <UnreadBadge count={item.badge ?? 0} className="ring-0" />}
             </NavLink>
           ))}
         </nav>

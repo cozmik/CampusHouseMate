@@ -32,6 +32,7 @@ export interface RawListing {
   contact_phone?: string | null;
   contact_whatsapp?: string | null;
   created_at: string;
+  archived_at?: string | null;
   listing_photos?: RawPhoto[];
 }
 export interface RawPhoto {
@@ -57,6 +58,9 @@ export interface RawConversation {
   lister_id: string;
   status: string;
   created_at: string;
+  last_message_at?: string | null;
+  seeker_last_read_at?: string | null;
+  lister_last_read_at?: string | null;
 }
 export interface RawMessage {
   id: string;
@@ -103,6 +107,7 @@ export function mapListing(row: RawListing): Listing {
       .map((p) => ({ id: p.id, url: p.url, position: p.position }))
       .sort((a, b) => a.position - b.position),
     createdAt: row.created_at,
+    archivedAt: row.archived_at ?? undefined,
   };
 }
 
@@ -137,6 +142,9 @@ export function mapConversation(row: RawConversation): Conversation {
     listerId: row.lister_id,
     status: row.status as Conversation["status"],
     createdAt: row.created_at,
+    lastMessageAt: row.last_message_at ?? row.created_at,
+    seekerLastReadAt: row.seeker_last_read_at ?? undefined,
+    listerLastReadAt: row.lister_last_read_at ?? undefined,
   };
 }
 

@@ -53,7 +53,7 @@ test.describe("Post a space", () => {
     await page.getByRole("button", { name: "Continue" }).click();
 
     await expect(page.getByRole("heading", { name: "Tell us about the room" })).toBeVisible();
-    await page.getByPlaceholder(/bright self-con/i).fill("Sunny self-con near gate");
+    await page.getByPlaceholder("Short title for the room").fill("Sunny self-con near gate");
     await page.getByRole("combobox").filter({ hasText: /select room type/i }).click();
     await page.getByRole("option", { name: "Self-contained" }).click();
     await page.getByRole("button", { name: "Continue" }).click();
@@ -64,7 +64,7 @@ test.describe("Post a space", () => {
     await page.getByRole("button", { name: "Continue" }).click();
 
     await expect(page.getByRole("heading", { name: "Price & availability" })).toBeVisible();
-    await page.getByPlaceholder("e.g. 150000").fill("180000");
+    await page.getByPlaceholder("Amount in naira").fill("180000");
     await page.locator('input[type="date"]').first().fill("2026-09-01");
     await page.getByRole("button", { name: "Continue" }).click();
 

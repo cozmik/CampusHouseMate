@@ -1,0 +1,87 @@
+-- Unread tracking and inbox ordering for conversations.
+-- A conversation is unread for a participant when last_message_at is later
+-- than their *_last_read_at. Existing conversations start out as read.
+
+alter table public.conversations
+  add column if not exists last_message_at timestamptz,
+  add column if not exists seeker_last_read_at timestamptz,
+  add column if not exists lister_last_read_at timestamptz;
+
+update public.conversations c
+set last_message_at = coalesce(
+  (select max(m.created_at) from public.messages m where m.conversation_id = c.id),
+  c.created_at
+)
+where c.last_message_at is null;
+
+update public.conversations
+set seeker_last_read_at = coalesce(seeker_last_read_at, last_message_at),
+    lister_last_read_at = coalesce(lister_last_read_at, last_message_at);
+
+alter table public.conversations
+  alter column last_message_at set default now(),
+  alter column last_message_at set not null,
+  alter column seeker_last_read_at set default now();
+
+create index if not exists conversations_last_message_idx
+  on public.conversations(last_message_at desc);
+
+-- Keep last_message_at current, and count the sender as having read their own message.
+create or replace function public.handle_new_message()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.conversations c
+  set last_message_at = greatest(c.last_message_at, new.created_at),
+      seeker_last_read_at = case when new.sender_id = c.seeker_id then new.created_at else c.seeker_last_read_at end,
+      lister_last_read_at = case when new.sender_id = c.lister_id then new.created_at else c.lister_last_read_at end
+  where c.id = new.conversation_id;
+  return new;
+end;
+$$;
+
+drop trigger if exists messages_after_insert on public.messages;
+create trigger messages_after_insert
+  after insert on public.messages
+  for each row execute function public.handle_new_message();
+
+-- Only touches the caller's own read marker.
+create or replace function public.mark_conversation_read(conv_id uuid)
+returns timestamptz
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  ts timestamptz := now();
+begin
+  update public.conversations
+  set seeker_last_read_at = case when seeker_id = auth.uid() then ts else seeker_last_read_at end,
+      lister_last_read_at = case when lister_id = auth.uid() then ts else lister_last_read_at end
+  where id = conv_id
+    and auth.uid() in (seeker_id, lister_id);
+  return ts;
+end;
+$$;
+
+revoke all on function public.mark_conversation_read(uuid) from public;
+grant execute on function public.mark_conversation_read(uuid) to authenticated;
+
+-- Latest message per conversation for inbox previews. Runs with the caller's RLS.
+create or replace function public.get_latest_messages(conv_ids uuid[])
+returns setof public.messages
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select distinct on (m.conversation_id) m.*
+  from public.messages m
+  where m.conversation_id = any(conv_ids)
+  order by m.conversation_id, m.created_at desc;
+$$;
+
+grant execute on function public.get_latest_messages(uuid[]) to authenticated;

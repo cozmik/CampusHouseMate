@@ -13,7 +13,7 @@ import { initials } from "@housemates/shared-utils";
 export default function Conversation() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getConversation, getMessages, getOtherParticipant, getListing, fetchListingById, sendMessage, shareContact, fetchMessages, subscribeMessages, getMyConversations, currentUser } = useApp();
+  const { getConversation, getMessages, getOtherParticipant, getListing, fetchListingById, sendMessage, shareContact, fetchMessages, openConversation, getMyConversations, currentUser } = useApp();
 
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -34,9 +34,13 @@ export default function Conversation() {
   useEffect(() => {
     if (!id) return;
     void fetchMessages(id);
-    const unsub = subscribeMessages(id);
-    return unsub;
-  }, [id, fetchMessages, subscribeMessages]);
+  }, [id, fetchMessages]);
+
+  const conversationLoaded = Boolean(conversation);
+  useEffect(() => {
+    if (!id || !conversationLoaded) return;
+    return openConversation(id);
+  }, [id, conversationLoaded, openConversation]);
 
   useEffect(() => {
     if (!conversation?.listingId || listing) return;
@@ -90,11 +94,13 @@ export default function Conversation() {
             </Avatar>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{displayName ?? "Unknown"}</p>
-              {listing && (
+              {listing && (listing.archivedAt ? (
+                <p className="truncate text-xs text-muted-foreground">{listing.title} · Listing removed</p>
+              ) : (
                 <Link to={`/listings/${listing.id}`} className="flex items-center gap-1 truncate text-xs text-muted-foreground hover:text-primary">
                   <span className="truncate">{listing.title}</span><ExternalLink className="h-3 w-3 shrink-0" />
                 </Link>
-              )}
+              ))}
             </div>
             {isContactShared && (
               <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-1 text-xs font-semibold text-success"><Check className="h-3 w-3" />Contact shared</span>
